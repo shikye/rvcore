@@ -241,6 +241,17 @@ wire [6:0]  func7   = id_func7_i;
             `Itype_J,`Itype_L,`Itype_A,`Btype,`Stype,`Rtype:begin
                 cu_reg1_RE_o = 1'b1;
             end
+
+            `Itype_C:begin
+                case(func3)
+                    `I_CSRRW:cu_reg1_RE_o = 1'b1;
+                    `I_CSRRS:cu_reg1_RE_o = 1'b1;
+                    `I_CSRRC:cu_reg1_RE_o = 1'b1;
+                
+                    default:cu_reg1_RE_o = 1'b0;
+                endcase
+        
+            end
             
             default:cu_reg1_RE_o = 1'b0;
         endcase

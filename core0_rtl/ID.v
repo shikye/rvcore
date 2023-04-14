@@ -280,11 +280,15 @@ eximm eximm_ins(
     assign id_op_a_o = (opcode == `Utype_L) ? 32'h0 : 
                         (opcode == `Utype_A) ? ifid_pc_i :
                         (opcode == `Jtype_J || opcode == `Itype_J) ? ifid_pc_i :
-                        (opcode == `Itype_C) ? csr_after_hazard :
+                        ( (opcode == `Itype_C && func3 == `I_CSRRS) || (opcode == `Itype_C && func3 == `I_CSRRSI) 
+                        || (opcode == `Itype_C && func3 == `I_CSRRC) || (opcode == `Itype_C && func3 == `I_CSRRCI)   
+                        ) ? csr_after_hazard :
                         rd1_after_hazard;         //most from regs
 
     assign id_op_b_o = (opcode == `Jtype_J || opcode == `Itype_J) ? 32'd4 :
                         (opcode == `Itype_A && (func3 == `I_SLLI || func3 == `I_SRLI_SRAI) ) ? shamt :
+                        ( (opcode == `Itype_C && func3 == `I_CSRRS) || (opcode == `Itype_C && func3 == `I_CSRRC)   
+                        ) ? rd1_after_hazard :
                         (opcode == `Itype_C) ? eximm_eximm_o :
                         cu_op_b_sel_o ? eximm_eximm_o :
                         rd2_after_hazard;           //most from regs or eximm

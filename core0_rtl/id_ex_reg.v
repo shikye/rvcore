@@ -30,7 +30,7 @@ module id_ex_reg (
 
     output  reg                     idex_csr_we_o,
     output  reg             [11:0]  idex_csr_waddr_o,
-    input   wire            [31:0]  idex_csr_rdata_o,
+    output  reg             [31:0]  idex_csr_rdata_o,
 
 
     output  reg             [4:0]   idex_ALUctrl_o,
@@ -68,6 +68,7 @@ module id_ex_reg (
 
             idex_csr_we_o <= 1'b0;
             idex_csr_waddr_o <= 12'b0;
+            idex_csr_rdata_o <= 32'd0;
         end
         else if(fc_stall_idex_i == 1'b1)begin
             idex_op_a_o <= idex_op_a_o;
@@ -87,6 +88,7 @@ module id_ex_reg (
 
             idex_csr_we_o <= idex_csr_we_o;
             idex_csr_waddr_o <= idex_csr_waddr_o;
+            idex_csr_rdata_o <= idex_csr_rdata_o;
         end
         else if(fc_flush_idex_i == 1'b1)begin
             idex_op_a_o <= 32'h0;
@@ -106,6 +108,7 @@ module id_ex_reg (
 
             idex_csr_we_o <= 1'b0;
             idex_csr_waddr_o <= 12'b0;
+            idex_csr_rdata_o <= 32'd0;
         end
         else begin
             idex_op_a_o <= id_op_a_i;
@@ -125,6 +128,7 @@ module id_ex_reg (
 
             idex_csr_we_o <= id_csr_we_i;
             idex_csr_waddr_o <= id_csr_waddr_i;
+            idex_csr_rdata_o <= id_csr_rdata_i;
         end
 
     end
