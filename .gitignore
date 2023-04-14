@@ -1,0 +1,4 @@
+*.vcd
+log
+*.vvp
+*.out
