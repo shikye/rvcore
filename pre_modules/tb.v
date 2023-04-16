@@ -379,6 +379,13 @@ axi_rom rom_u
 
 
 initial begin
+    #100
+    Rvcore_valid_req_i = 1'b1;
+    Rvcore_rw_i = 1'b0;
+    Rvcore_addr_i = 'd0;
+    Rvcore_data_i = 128'h03030303030303030303030303030303;
+    #10
+    Rvcore_valid_req_i = 1'b0;
     #120
     Rvcore_valid_req_i = 1'b1;
     Rvcore_rw_i = 1'b1;

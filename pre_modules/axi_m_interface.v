@@ -26,8 +26,8 @@ module axi_m#
 
 
     /*Write Address Channel*/
-    output  wire    [WIDTH_ID-1 : 0]        M_AXI_AWID,
-    output  wire    [WIDTH_AD-1 : 0]      M_AXI_AWADDR,
+    output  wire    [WIDTH_ID-1 : 0]                M_AXI_AWID,
+    output  wire    [WIDTH_AD-1 : 0]                M_AXI_AWADDR,
     output  wire    [3 : 0]                         M_AXI_AWLEN,
     output  wire    [2 : 0]                         M_AXI_AWSIZE,
     output  wire    [1 : 0]                         M_AXI_AWBURST,
@@ -42,14 +42,14 @@ module axi_m#
     input   wire                                    M_AXI_WREADY,
 
     /*Write Response (B) Channel*/
-    input   wire    [WIDTH_ID-1 : 0]        M_AXI_BID,
+    input   wire    [WIDTH_ID-1 : 0]                M_AXI_BID,
     input   wire    [1 : 0]                         M_AXI_BRESP,
     input   wire                                    M_AXI_BVALID,
     output  wire                                    M_AXI_BREADY,
 
     /*Read Address Channel*/
-    output  wire    [WIDTH_ID-1 : 0]        M_AXI_ARID,
-    output  wire    [WIDTH_AD-1 : 0]      M_AXI_ARADDR,
+    output  wire    [WIDTH_ID-1 : 0]                M_AXI_ARID,
+    output  wire    [WIDTH_AD-1 : 0]                M_AXI_ARADDR,
     output  wire    [3 : 0]                         M_AXI_ARLEN,
     output  wire    [2 : 0]                         M_AXI_ARSIZE,
     output  wire    [1 : 0]                         M_AXI_ARBURST,
@@ -57,8 +57,8 @@ module axi_m#
     input   wire                                    M_AXI_ARREADY,
 
     /*Read Data Channel*/
-    input   wire    [WIDTH_ID-1 : 0]        M_AXI_RID,
-    input   wire    [WIDTH_DA-1 : 0]      M_AXI_RDATA,
+    input   wire    [WIDTH_ID-1 : 0]                M_AXI_RID,
+    input   wire    [WIDTH_DA-1 : 0]                M_AXI_RDATA,
     input   wire    [1 : 0]                         M_AXI_RRESP,
     input   wire                                    M_AXI_RLAST,
     input   wire                                    M_AXI_RVALID,
