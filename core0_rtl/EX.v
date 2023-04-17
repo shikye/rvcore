@@ -48,7 +48,10 @@ module EX (
 
     //to fc
     output  wire                    ex_branch_flag_o,
-    output  wire            [31:0]  ex_branch_pc_o
+    output  wire            [31:0]  ex_branch_pc_o,
+
+    //from fc
+    input   wire                    fc_stall_ex_i
 
 );
 
@@ -65,7 +68,7 @@ assign ex_mem_addr_o = ex_op_c_o;
 assign ex_mem_wrwidth_o = idex_mem_width_i;
 assign ex_mem_wr_data_o = idex_mem_wr_data_i;
 
-assign ex_req_Dcache_o = idex_mtype_i ? 1'b1 : 1'b0;
+assign ex_req_Dcache_o = fc_stall_ex_i : 1'b0 : idex_mtype_i ? 1'b1 : 1'b0;
 
 
 

@@ -282,11 +282,15 @@ always@(ACLK or ARESETn)begin
             r_M1_USE <= 1'b1;
             M0_WAIT <= 1'b1;
         end 
-        if(M1_USE) 
+        if(M1_USE) begin
             r_M1_USE <= 1'b1;
+            M0_WAIT <= 1'b1;
+        end
         else 
         if(M0_USE) 
             r_M0_USE <= 1'b1;
+
+
 
         if(r_M0_USE)begin
             if(WLAST || RLAST)

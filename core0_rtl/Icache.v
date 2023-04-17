@@ -28,13 +28,13 @@ module Icache (
     //from fc
     input   wire                    fc_jump_flag_Icache_i,
     
-    //to mem
+    //to bus_controller
     output  reg             [31:0]  Icache_addr_o,
     output  reg                     Icache_valid_req_o,
 
-    //from mem
-    input   wire                    mem_ready_i,
-    input   wire            [127:0] mem_data_i
+    //from bus_controller
+    input   wire                    bc_Icache_ready_i,
+    input   wire            [127:0] bc_Icache_data_i
 );
     
 //FSM
@@ -297,17 +297,17 @@ always @(posedge clk or negedge rst_n) begin
 
             else begin
 
-                if(mem_ready_i == 1'b1) begin //set valid
-                    ICache_Data_Block[(Index_off << 1) + victim_number] <= mem_data_i;
+                if(bc_Icache_ready_i == 1'b1) begin //set valid
+                    ICache_Data_Block[(Index_off << 1) + victim_number] <= bc_Icache_data_i;
                     ICache_Tag_Array[(Index_off << 1) + victim_number][Valid] <= 1'b1;
 
                     Icache_ready_o <= 1'b1;
 
                     case(Read_off)
-                        2'b00:Icache_inst_o <= mem_data_i[31:0];
-                        2'b01:Icache_inst_o <= mem_data_i[63:32];
-                        2'b10:Icache_inst_o <= mem_data_i[95:64];
-                        2'b11:Icache_inst_o <= mem_data_i[127:96];
+                        2'b00:Icache_inst_o <= bc_Icache_data_i[31:0];
+                        2'b01:Icache_inst_o <= bc_Icache_data_i[63:32];
+                        2'b10:Icache_inst_o <= bc_Icache_data_i[95:64];
+                        2'b11:Icache_inst_o <= bc_Icache_data_i[127:96];
                         default:Icache_inst_o <= 32'h0;
                     endcase
 

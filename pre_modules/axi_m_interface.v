@@ -22,7 +22,8 @@ module axi_m#
     output  reg                                     axi_rd_over_o,
     output  reg                                     axi_wr_over_o,
 
-    input   wire                                    core_WAIT,
+    input   wire                                    core_WAIT_i,
+    output  wire                                    core_WAIT_o,
 
 
     /*Write Address Channel*/
@@ -64,6 +65,8 @@ module axi_m#
     input   wire                                    M_AXI_RVALID,
     output  wire                                    M_AXI_RREADY
 );
+
+assign core_WAIT_o = core_WAIT_i;
 
 
 /********************FSM***********************************/
@@ -108,7 +111,7 @@ reg [127:0]                         r_wdata;
 
 reg [2:0]                           r_rburst_cnt;
 
-reg                                 r_core_wait; //等待CORE_WAIT下降沿
+
 
 
 /*********************combination***************************/
@@ -141,20 +144,6 @@ assign M_AXI_RREADY     = 1'b1;
 
 
 /*********************sequence******************************/
-//core_wait
-
-wire transaction_again;
-
-always @(posedge M_AXI_ACLK) begin
-  if(M_AXI_ARESETN == 1'b0) 
-    r_core_wait <= 1'b0;
-  else 
-    r_core_wait <= core_WAIT;
-end
-
-assign transaction_again = ~core_WAIT && r_core_wait;
-
-
 
 
 /*Write Transaction*/
@@ -179,21 +168,21 @@ always @(posedge M_AXI_ACLK) begin
 
         axi_wr_over_o <= 1'b0;
 
-        if( (Rvcore_valid_req_i == 1'b1 || transaction_again) && Rvcore_rw_i == 1'b0) begin
-
-          r_m_axi_awvalid <= 1'b1;
-          r_m_axi_awaddr <= Rvcore_addr_i;
-
-          r_wdata <= Rvcore_data_i;
-
-        end
-        else if(M_AXI_AWVALID == 1'b1 && M_AXI_AWREADY == 1'b1)begin
+        if(M_AXI_AWVALID == 1'b1 && M_AXI_AWREADY == 1'b1)begin
           r_m_axi_awvalid <= 1'b0;
 
           r_m_axi_wvalid <= 1'b1;
           r_m_axi_wdata <= Rvcore_data_i[31:0];
 
           W_state <= W_Trans;
+        end
+        else if( (Rvcore_valid_req_i == 1'b1 || transaction_again) && Rvcore_rw_i == 1'b0) begin
+
+          r_m_axi_awvalid <= 1'b1;
+          r_m_axi_awaddr <= Rvcore_addr_i;
+
+          r_wdata <= Rvcore_data_i;
+
         end
         else begin
           W_state <= W_Idle;

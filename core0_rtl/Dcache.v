@@ -33,7 +33,7 @@ module Dcache(
     output  reg                     Dcache_ready_o,   //read out valid or write over
     output  wire                    Dcache_hit_o,
 
-    //to ram
+    //to bus_controller
     output  reg                     Dcache_rd_req_o, 
     output  reg             [31:0]  Dcache_rd_addr_o,
 
@@ -43,9 +43,9 @@ module Dcache(
     output  reg             [127:0] Dcache_wb_data_o,
 
 
-    //from ram
-    input   wire            [127:0] ram_data_i,
-    input   wire                    ram_ready_i
+    //from bus_controller
+    input   wire            [127:0] bc_Dcache_data_i,
+    input   wire                    bc_Dcache_ready_i
 );
 
 //FSM
@@ -571,11 +571,139 @@ always @ (posedge clk or negedge rst_n)begin   //the key judge conditions
                 Dcache_ready_o <= 1'b0;
                 Dcache_wb_req_o <= 1'b0;
                 
-                if(ram_ready_i == 1'b1) begin
-                    cur_state <= Read_from_Ram;
+                if(bc_Dcache_ready_i == 1'b1) begin
+                    
 
-                    Dcache_rd_req_o <= 1'b1;
-                    Dcache_rd_addr_o <= { Tag_Buffer, Index_Buffer, {4{1'b0}} };
+
+                    case(rw_Buffer)
+                        1'b0:begin //write cache
+                            
+                            cur_state <= Idle_or_Compare_Tag;
+
+                            Dcache_Tag_Array[(Index_Buffer << 1) + victim_number][Dirty] = 1'b1;
+
+
+                            case(Dcache_Block_Off)
+                                2'b00:begin
+                                    case(Wr_Width_Buffer)  //how many byte need to write
+                                        2'd1:begin
+                                            case(Dcache_Byte_Off)
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:8], Mem_Data_Buffer[7:0]};
+                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:16], Mem_Data_Buffer[7:0], bc_Dcache_data_i[7:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:24], Mem_Data_Buffer[7:0], bc_Dcache_data_i[15:0]};
+                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:32], Mem_Data_Buffer[7:0], bc_Dcache_data_i[23:0]};
+                                                default:;
+                                            endcase
+                                        end
+
+                                        2'd2:begin
+                                            case(Dcache_Byte_Off)   //有对齐要求
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:16], Mem_Data_Buffer[15:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:32], Mem_Data_Buffer[15:0], bc_Dcache_data_i[15:0]};
+                                                default:;
+                                            endcase
+                                        end
+
+                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:32], Mem_Data_Buffer[31:0]};
+
+                                        default:;
+                                    endcase
+                                end
+
+                                2'b01:begin
+                                    case(Wr_Width_Buffer)  //how many byte need to write
+                                        2'd1:begin
+                                            case(Dcache_Byte_Off)
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:40], Mem_Data_Buffer[7:0], bc_Dcache_data_i[31:0]};
+                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:48], Mem_Data_Buffer[7:0], bc_Dcache_data_i[39:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:56], Mem_Data_Buffer[7:0], bc_Dcache_data_i[47:0]};
+                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:64], Mem_Data_Buffer[7:0], bc_Dcache_data_i[55:0]};
+                                                default:;
+                                            endcase
+                                        end
+
+                                        2'd2:begin
+                                            case(Dcache_Byte_Off)   //有对齐要求
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:48], Mem_Data_Buffer[15:0], bc_Dcache_data_i[31:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:64], Mem_Data_Buffer[15:0], bc_Dcache_data_i[47:0]};
+                                                default:;
+                                            endcase
+                                        end
+
+                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:64], Mem_Data_Buffer[31:0], bc_Dcache_data_i[31:0]};
+
+                                        default:;
+                                    endcase
+                                end
+
+                                2'b10:begin
+                                    case(Wr_Width_Buffer)  //how many byte need to write
+                                        2'd1:begin
+                                            case(Dcache_Byte_Off)
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:72], Mem_Data_Buffer[7:0], bc_Dcache_data_i[63:0]};
+                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:80], Mem_Data_Buffer[7:0], bc_Dcache_data_i[71:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:88], Mem_Data_Buffer[7:0], bc_Dcache_data_i[79:0]};
+                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:96], Mem_Data_Buffer[7:0], bc_Dcache_data_i[87:0]};
+                                                default:;
+                                            endcase
+                                        end
+
+                                        2'd2:begin
+                                            case(Dcache_Byte_Off)   //有对齐要求
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:80], Mem_Data_Buffer[15:0], bc_Dcache_data_i[63:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:96], Mem_Data_Buffer[15:0], bc_Dcache_data_i[79:0]};
+                                                default:;
+                                            endcase
+                                        end
+
+                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:96], Mem_Data_Buffer[31:0], bc_Dcache_data_i[63:0]};
+
+                                        default:;
+                                    endcase
+                                end
+
+                                2'b11:begin
+                                    case(Wr_Width_Buffer)  //how many byte need to write
+                                        2'd1:begin
+                                            case(Dcache_Byte_Off)
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:104], Mem_Data_Buffer[7:0], bc_Dcache_data_i[95:0]};
+                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:112], Mem_Data_Buffer[7:0], bc_Dcache_data_i[103:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:120], Mem_Data_Buffer[7:0], bc_Dcache_data_i[111:0]};
+                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {Mem_Data_Buffer[7:0], bc_Dcache_data_i[119:0]};
+                                                default:;
+                                            endcase
+                                        end
+
+                                        2'd2:begin
+                                            case(Dcache_Byte_Off)   //有对齐要求
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:112], Mem_Data_Buffer[15:0], bc_Dcache_data_i[95:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {Mem_Data_Buffer[15:0], bc_Dcache_data_i[111:0]};
+                                                default:;
+                                            endcase
+                                        end
+
+                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {Mem_Data_Buffer[31:0], bc_Dcache_data_i[95:0]};
+
+                                        default:;
+                                    endcase
+                                end
+
+                                default:;
+                            endcase
+
+                        end
+                        1'b1:begin
+                            cur_state <= Read_from_Ram;
+
+                            Dcache_rd_req_o <= 1'b1;
+                            Dcache_rd_addr_o <= { Tag_Buffer, Index_Buffer, {4{1'b0}} };
+                        
+                        end
+                        default:;
+                    
+                    endcase
+
+                    
                 end
                 else begin
                     cur_state <= Write_Back;
@@ -586,7 +714,7 @@ always @ (posedge clk or negedge rst_n)begin   //the key judge conditions
 
                 Dcache_rd_req_o <= 1'b0;
 
-                if(ram_ready_i == 1'b1) begin //change Valid, Dirty, Replace, AND Tag
+                if(bc_Dcache_ready_i == 1'b1) begin //change Valid, Dirty, Replace, AND Tag
 
                     
                     Dcache_Tag_Array[(Index_Buffer << 1) + victim_number][Valid] <= 1'b1;
@@ -620,23 +748,23 @@ always @ (posedge clk or negedge rst_n)begin   //the key judge conditions
                                     case(Wr_Width_Buffer)  //how many byte need to write
                                         2'd1:begin
                                             case(Dcache_Byte_Off)
-                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:8], Mem_Data_Buffer[7:0]};
-                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:16], Mem_Data_Buffer[7:0], ram_data_i[7:0]};
-                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:24], Mem_Data_Buffer[7:0], ram_data_i[15:0]};
-                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:32], Mem_Data_Buffer[7:0], ram_data_i[23:0]};
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:8], Mem_Data_Buffer[7:0]};
+                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:16], Mem_Data_Buffer[7:0], bc_Dcache_data_i[7:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:24], Mem_Data_Buffer[7:0], bc_Dcache_data_i[15:0]};
+                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:32], Mem_Data_Buffer[7:0], bc_Dcache_data_i[23:0]};
                                                 default:;
                                             endcase
                                         end
 
                                         2'd2:begin
                                             case(Dcache_Byte_Off)   //有对齐要求
-                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:16], Mem_Data_Buffer[15:0]};
-                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:32], Mem_Data_Buffer[15:0], ram_data_i[15:0]};
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:16], Mem_Data_Buffer[15:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:32], Mem_Data_Buffer[15:0], bc_Dcache_data_i[15:0]};
                                                 default:;
                                             endcase
                                         end
 
-                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:32], Mem_Data_Buffer[31:0]};
+                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:32], Mem_Data_Buffer[31:0]};
 
                                         default:;
                                     endcase
@@ -646,23 +774,23 @@ always @ (posedge clk or negedge rst_n)begin   //the key judge conditions
                                     case(Wr_Width_Buffer)  //how many byte need to write
                                         2'd1:begin
                                             case(Dcache_Byte_Off)
-                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:40], Mem_Data_Buffer[7:0], ram_data_i[31:0]};
-                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:48], Mem_Data_Buffer[7:0], ram_data_i[39:0]};
-                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:56], Mem_Data_Buffer[7:0], ram_data_i[47:0]};
-                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:64], Mem_Data_Buffer[7:0], ram_data_i[55:0]};
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:40], Mem_Data_Buffer[7:0], bc_Dcache_data_i[31:0]};
+                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:48], Mem_Data_Buffer[7:0], bc_Dcache_data_i[39:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:56], Mem_Data_Buffer[7:0], bc_Dcache_data_i[47:0]};
+                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:64], Mem_Data_Buffer[7:0], bc_Dcache_data_i[55:0]};
                                                 default:;
                                             endcase
                                         end
 
                                         2'd2:begin
                                             case(Dcache_Byte_Off)   //有对齐要求
-                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:48], Mem_Data_Buffer[15:0], ram_data_i[31:0]};
-                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:64], Mem_Data_Buffer[15:0], ram_data_i[47:0]};
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:48], Mem_Data_Buffer[15:0], bc_Dcache_data_i[31:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:64], Mem_Data_Buffer[15:0], bc_Dcache_data_i[47:0]};
                                                 default:;
                                             endcase
                                         end
 
-                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:64], Mem_Data_Buffer[31:0], ram_data_i[31:0]};
+                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:64], Mem_Data_Buffer[31:0], bc_Dcache_data_i[31:0]};
 
                                         default:;
                                     endcase
@@ -672,23 +800,23 @@ always @ (posedge clk or negedge rst_n)begin   //the key judge conditions
                                     case(Wr_Width_Buffer)  //how many byte need to write
                                         2'd1:begin
                                             case(Dcache_Byte_Off)
-                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:72], Mem_Data_Buffer[7:0], ram_data_i[63:0]};
-                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:80], Mem_Data_Buffer[7:0], ram_data_i[71:0]};
-                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:88], Mem_Data_Buffer[7:0], ram_data_i[79:0]};
-                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:96], Mem_Data_Buffer[7:0], ram_data_i[87:0]};
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:72], Mem_Data_Buffer[7:0], bc_Dcache_data_i[63:0]};
+                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:80], Mem_Data_Buffer[7:0], bc_Dcache_data_i[71:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:88], Mem_Data_Buffer[7:0], bc_Dcache_data_i[79:0]};
+                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:96], Mem_Data_Buffer[7:0], bc_Dcache_data_i[87:0]};
                                                 default:;
                                             endcase
                                         end
 
                                         2'd2:begin
                                             case(Dcache_Byte_Off)   //有对齐要求
-                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:80], Mem_Data_Buffer[15:0], ram_data_i[63:0]};
-                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:96], Mem_Data_Buffer[15:0], ram_data_i[79:0]};
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:80], Mem_Data_Buffer[15:0], bc_Dcache_data_i[63:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:96], Mem_Data_Buffer[15:0], bc_Dcache_data_i[79:0]};
                                                 default:;
                                             endcase
                                         end
 
-                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:96], Mem_Data_Buffer[31:0], ram_data_i[63:0]};
+                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:96], Mem_Data_Buffer[31:0], bc_Dcache_data_i[63:0]};
 
                                         default:;
                                     endcase
@@ -698,23 +826,23 @@ always @ (posedge clk or negedge rst_n)begin   //the key judge conditions
                                     case(Wr_Width_Buffer)  //how many byte need to write
                                         2'd1:begin
                                             case(Dcache_Byte_Off)
-                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:104], Mem_Data_Buffer[7:0], ram_data_i[95:0]};
-                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:112], Mem_Data_Buffer[7:0], ram_data_i[103:0]};
-                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:120], Mem_Data_Buffer[7:0], ram_data_i[111:0]};
-                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {Mem_Data_Buffer[7:0], ram_data_i[119:0]};
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:104], Mem_Data_Buffer[7:0], bc_Dcache_data_i[95:0]};
+                                                2'b01:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:112], Mem_Data_Buffer[7:0], bc_Dcache_data_i[103:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:120], Mem_Data_Buffer[7:0], bc_Dcache_data_i[111:0]};
+                                                2'b11:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {Mem_Data_Buffer[7:0], bc_Dcache_data_i[119:0]};
                                                 default:;
                                             endcase
                                         end
 
                                         2'd2:begin
                                             case(Dcache_Byte_Off)   //有对齐要求
-                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {ram_data_i[127:112], Mem_Data_Buffer[15:0], ram_data_i[95:0]};
-                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {Mem_Data_Buffer[15:0], ram_data_i[111:0]};
+                                                2'b00:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {bc_Dcache_data_i[127:112], Mem_Data_Buffer[15:0], bc_Dcache_data_i[95:0]};
+                                                2'b10:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {Mem_Data_Buffer[15:0], bc_Dcache_data_i[111:0]};
                                                 default:;
                                             endcase
                                         end
 
-                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {Mem_Data_Buffer[31:0], ram_data_i[95:0]};
+                                        2'd3:Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= {Mem_Data_Buffer[31:0], bc_Dcache_data_i[95:0]};
 
                                         default:;
                                     endcase
@@ -727,15 +855,15 @@ always @ (posedge clk or negedge rst_n)begin   //the key judge conditions
 
                         1'b1:begin//read cache
 
-                            Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= ram_data_i;
+                            Dcache_Data_Block[(Index_Buffer << 1) + victim_number] <= bc_Dcache_data_i;
                             
                             Dcache_Tag_Array[(Index_Buffer << 1) + victim_number][Dirty] = 1'b0;
 
                             case(Block_Off_Buffer)
-                                2'b00:Dcache_data_o <= ram_data_i[31:0];
-                                2'b01:Dcache_data_o <= ram_data_i[63:32];
-                                2'b10:Dcache_data_o <= ram_data_i[95:64];
-                                2'b11:Dcache_data_o <= ram_data_i[127:96];
+                                2'b00:Dcache_data_o <= bc_Dcache_data_i[31:0];
+                                2'b01:Dcache_data_o <= bc_Dcache_data_i[63:32];
+                                2'b10:Dcache_data_o <= bc_Dcache_data_i[95:64];
+                                2'b11:Dcache_data_o <= bc_Dcache_data_i[127:96];
                                 default:Dcache_data_o <= 32'h0;
                             endcase
                         end
