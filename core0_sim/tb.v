@@ -31,7 +31,7 @@ module tb;
             #1000
             if(tb.soc_ins.rvcore_ins.regs_ins.regs[27] == 32'd1) begin
                 $display("PASS");
-
+                $display("t3 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[28]);
             end
             else begin
                 $display("FAIL");
@@ -53,8 +53,6 @@ module tb;
         $display("t4 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[29]);
         $display("t5 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[30]);
         $display("gp = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[3]);
-
-        $display("mie = 0x%x",tb.soc_ins.rvcore_ins.csr_regs_ins.mie);
         $display("--------------------------------------------------");
     end
 

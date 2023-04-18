@@ -1,6 +1,5 @@
 module axi_m#
 (
-    parameter  SLV_ADDR_BASE	= 32'h00000000,
     parameter integer BURST_LEN	= 4,
     parameter integer BURST_TYPE	= 4,     //2'b00 FIXED, 2'b01 INCR
     parameter integer WIDTH_ID	= 1,

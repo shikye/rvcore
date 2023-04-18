@@ -68,7 +68,7 @@ assign ex_mem_addr_o = ex_op_c_o;
 assign ex_mem_wrwidth_o = idex_mem_width_i;
 assign ex_mem_wr_data_o = idex_mem_wr_data_i;
 
-assign ex_req_Dcache_o = fc_stall_ex_i ? 1'b0 : idex_mtype_i ? 1'b1 : 1'b0;
+assign ex_req_Dcache_o = idex_mtype_i ? 1'b1 : 1'b0;
 
 
 

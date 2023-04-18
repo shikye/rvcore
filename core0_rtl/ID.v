@@ -111,38 +111,71 @@ module ID (
 
 
 //-----for other keep and Icache_inst need to store------
-    reg [31:0]  Inst_Buffer;
+    reg [31:0]  Inst_Buffer[0:1];
     reg         Icache_in_Buffer;
+    reg [1:0]   Buffer_number;
+
+    reg [31:0]  Buffer_to_id;
 
 
     always @(posedge clk or negedge rst_n) begin
         if(rst_n == 1'b0)begin
-            Inst_Buffer <= 32'h0;
+            Inst_Buffer[0] <= 32'h0;
+            Inst_Buffer[1] <= 32'h0;
+            Buffer_to_id <= 32'd0;
+            Buffer_number <= 2'd0;
             Icache_in_Buffer <= 1'b0;
         end
 
         //流水线暂停，但此时Icache给出了有效数据，ID需要保存，而不是直接使用
         else if(fc_stall_id_i == 1'b1 && Icache_ready_i == 1'b1)begin   
-            Inst_Buffer <= Icache_inst_i;
+            
             Icache_in_Buffer <= 1'b1;
+
+            if(Buffer_number == 2'd0)begin
+                Buffer_number <= 2'd1;
+                Inst_Buffer[0] <= Icache_inst_i;
+                Buffer_to_id <= Icache_inst_i;
+            end
+            else if(Buffer_number == 2'd1)begin
+                Buffer_number <= 2'd2;
+                Inst_Buffer[1] <= Icache_inst_i;
+            end
         end
 
         else if(fc_stall_id_i == 1'b1) begin  //keep
             Icache_in_Buffer <= Icache_in_Buffer;
-            Inst_Buffer <= Inst_Buffer;   
+            Buffer_number <= Buffer_number;
+            Inst_Buffer[0] <= Inst_Buffer[0];
+            Inst_Buffer[1] <= Inst_Buffer[1];   
         end
 
         else if(fc_flush_id_i == 1'b1)begin
             Icache_in_Buffer <= 1'b0;
-            Inst_Buffer <= 32'h0;
+            Inst_Buffer[0] <= 32'd0;
+            Inst_Buffer[1] <= 32'd0;   
+            Buffer_number <= 2'd0;
         end
 
         else begin
-            Inst_Buffer <= Icache_inst_i;
             
-            if(Icache_in_Buffer == 1'b1)
-                Icache_in_Buffer <= 1'b0;
+            Inst_Buffer[0] <= Icache_inst_i;
+            
+            if(Icache_in_Buffer == 1'b1) begin
+
+                if(Buffer_number == 2'd2)begin
+                    Buffer_to_id <= Inst_Buffer[1];
+                    Buffer_number <= 2'd1;
+                end
+                else if(Buffer_number == 2'd1)begin
+                    Buffer_to_id <= Icache_inst_i;
+                    Buffer_number <= 2'd0;
+                    Icache_in_Buffer <= 1'd0;
+                end
+
+            end
         end
+
     end
 
 //--------------------for load_use
@@ -189,7 +222,7 @@ module ID (
     end
 
 //-----------------------------------------
-    assign inst = recover_flag ? inst_load_use : (fc_stall_id_i == 1'b1) ? 32'h0 : Icache_in_Buffer ? Inst_Buffer : flush_flag ? 32'h0 : Icache_ready_i ? Icache_inst_i : 32'h0;
+    assign inst = recover_flag ? inst_load_use : (fc_stall_id_i == 1'b1) ? 32'h0 : Icache_in_Buffer ? Buffer_to_id : flush_flag ? 32'h0 : Icache_ready_i ? Icache_inst_i : 32'h0;
 
 
 
