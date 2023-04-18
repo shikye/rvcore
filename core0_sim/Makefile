@@ -9,6 +9,6 @@ run:
 	vvp out.vvp
 
 clean:
-	rm -rf *.vvp *.vcd *.out
+	rm -rf *.vvp *.vcd *.out log
 
 .PHONY: compile_tb clean run

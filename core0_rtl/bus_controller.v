@@ -37,10 +37,12 @@ module bus_controller(
     input   wire                    core_WAIT_i,
 
     //to fc
-    output  wire                    core_WAIT_o //stall Icache,Dcache         
+    output  wire                    core_WAIT_bus_o, //stall Icache,Dcache         
+    //from fc
+    input   wire                    fc_jump_flag_Icache_i
 );
 
-assign core_WAIT_o = core_WAIT_i;
+assign core_WAIT_bus_o = core_WAIT_i;
 
 //arbiter
 reg [1:0] bus_user;   //1-Icache 2-Dcache 0-not using
@@ -109,12 +111,12 @@ always@(posedge clk)begin
                 bus_data <= 128'd0;
                 
 
-                if(Icache_valid_req_i || Dcache_rd_req_i || Dcache_wb_req_i || Icache_req_again)begin
+                if( (Icache_valid_req_i && ~fc_jump_flag_Icache_i)|| Dcache_rd_req_i || Dcache_wb_req_i || Icache_req_again)begin
                     
                     State <= S_USING;
                     valid_req <= 1'b1;
 
-                    if( (Icache_req_again || Icache_valid_req_i) && (Dcache_rd_req_i || Dcache_wb_req_i))begin  //Dcache prior
+                    if( (Icache_req_again || (Icache_valid_req_i && ~fc_jump_flag_Icache_i) ) && (Dcache_rd_req_i || Dcache_wb_req_i))begin  //Dcache prior
                         bus_user <= 2'd2;
                         Icache_req_again <= 1'b1;
                     
@@ -151,7 +153,7 @@ always@(posedge clk)begin
                     else if(Icache_valid_req_i)begin
                         bus_user <= 2'd1;
                         bus_rw <= 1'b1;
-                        Icache_addr_i;
+                        bus_addr <= Icache_addr_i;
                     end
                 end
 
@@ -160,6 +162,8 @@ always@(posedge clk)begin
             
 
             S_USING:begin
+
+
 
                 if(valid_req)begin
                     valid_req <= 1'b0;

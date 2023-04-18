@@ -27,6 +27,7 @@ module Icache (
 
     //from fc
     input   wire                    fc_jump_flag_Icache_i,
+    input   wire                    fc_stall_Icache_i,
     
     //to bus_controller
     output  reg             [31:0]  Icache_addr_o,
@@ -79,6 +80,10 @@ assign Icache_hit_o              = (ICache_Tag_hit != 2'b00);
 reg         victim_number;
 
 
+//core_wait and req again
+reg         req_again;
+
+
 //initial
 always @(*) begin
     if(rst_n == 1'b0)begin
@@ -116,6 +121,8 @@ always @(posedge clk or negedge rst_n) begin
 
         Read_off <= 2'b0;
 
+        req_again <= 1'b0;
+
         cur_state <= Idle_or_Compare_Tag;
     end 
     else begin
@@ -128,9 +135,13 @@ always @(posedge clk or negedge rst_n) begin
 
                     cur_state <= Idle_or_Compare_Tag;
                 
-                end else begin
+                end 
+                else begin
+                    if(fc_stall_Icache_i == 1'b1)begin
+                        req_again <= 1'b1;
+                    end
 
-                    if(if_req_Icache_i == 1'b1)begin
+                    else if(if_req_Icache_i == 1'b1 || req_again == 1'b1)begin
 
                         if(Icache_hit_o == 1'b1)begin   //read hit then change Replace
 
@@ -200,6 +211,9 @@ always @(posedge clk or negedge rst_n) begin
                             endcase
                         end
                     end
+                    
+                    
+
 
                     else begin    //no valid req
                         cur_state <= Idle_or_Compare_Tag;

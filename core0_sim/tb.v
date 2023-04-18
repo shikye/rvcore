@@ -14,17 +14,12 @@ module tb;
     end
 
     initial begin
-        $readmemh("./inst",tb.soc_ins.rom_ins.rom_mem);
+        $readmemh("./inst",tb.soc_ins.rom.r_ram);
     end
 
 
     initial begin
         $dumpvars(0,tb.soc_ins
-        // ,tb.soc_ins.rvcore_ins.Icache_ins.ICache_Tag_Array[0],
-        // tb.soc_ins.rvcore_ins.Icache_ins.ICache_Tag_Array[1],
-        //  tb.soc_ins.rvcore_ins.Icache_ins.ICache_Tag_Array[2],
-        //  tb.soc_ins.rvcore_ins.Icache_ins.ICache_Tag_Array[3]
-        // tb.soc_ins.rvcore_ins.Icache_ins.ICache_Data_Block[0]
         );
         $dumpfile("tb.vcd");
     end
@@ -33,7 +28,7 @@ module tb;
     initial begin
 
         wait(tb.soc_ins.rvcore_ins.regs_ins.regs[26] == 32'd1) begin
-            #100
+            #1000
             if(tb.soc_ins.rvcore_ins.regs_ins.regs[27] == 32'd1) begin
                 $display("PASS");
 

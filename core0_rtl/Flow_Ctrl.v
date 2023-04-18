@@ -63,6 +63,7 @@ module Flow_Ctrl(                  //Flush, Stall, Jump
     output  reg                     fc_stall_ex_o,
     output  reg                     fc_stall_mem_o,
     output  reg                     fc_stall_wb_o,
+    output  reg                     fc_stall_Icache_o,
 
     output  reg                     fc_stall_ifid_o,
     output  reg                     fc_stall_idex_o,
@@ -119,6 +120,7 @@ always@(*)begin
     fc_stall_ex_o = 1'b0;
     fc_stall_mem_o = 1'b0;
     fc_stall_wb_o = 1'b0;
+    fc_stall_Icache_o = 1'b0;
 
     fc_stall_ifid_o = 1'b0;
     fc_stall_idex_o = 1'b0;
@@ -131,6 +133,7 @@ always@(*)begin
         fc_stall_ex_o = 1'b1;
         fc_stall_mem_o = 1'b1;
         fc_stall_wb_o = 1'b1;
+        fc_stall_Icache_o = 1'b1;
 
         fc_stall_ifid_o = 1'b1;
         fc_stall_idex_o = 1'b1;
