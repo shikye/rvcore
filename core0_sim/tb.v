@@ -20,6 +20,7 @@ module tb;
 
     initial begin
         $dumpvars(0,tb.soc_ins
+        ,tb.soc_ins.rvcore_ins.Dcache_ins.Dcache_Data_Block[0]
         );
         $dumpfile("tb.vcd");
     end
@@ -49,10 +50,12 @@ module tb;
     always@(posedge clk) begin
         $display($time);
         $display("ra = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[1]);
+        $display("sp = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[2]);
         $display("a0 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[10]);
         $display("t4 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[29]);
         $display("t5 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[30]);
         $display("gp = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[3]);
+        $display("Block0 = 0x%x",tb.soc_ins.rvcore_ins.Dcache_ins.Dcache_Data_Block[0]);
         $display("--------------------------------------------------");
     end
 

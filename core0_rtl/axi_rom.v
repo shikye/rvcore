@@ -79,8 +79,8 @@ reg                             r_s_axi_rlast                           ;
 
 reg                             r_s_axi_bvalid                          ;
 
-reg [7 : 0]                     r_ram[0 : 4095]                          ;
-reg [7:0]                       r_ram_addr                              ;
+reg [7 : 0]                     r_ram[0 : 8191]                          ;
+reg [12:0]                       r_ram_addr                              ;
 
 /**********************组合逻辑***********************/
 assign              S_AXI_AWREADY   = 1'b1                              ;
@@ -227,16 +227,16 @@ always @(posedge S_AXI_ACLK) begin
             r_s_axi_araddr <= S_AXI_ARADDR;
             r_s_axi_arlen <= S_AXI_ARLEN;
 
-            r_ram_addr <= S_AXI_ARADDR[11:0];
+            r_ram_addr <= S_AXI_ARADDR[12:0];
 
             R_state <= R_Receive;
 
             r_s_axi_rvalid <= 1'b1;
 
-            r_s_axi_rdata[7:0] <=   r_ram[S_AXI_ARADDR[11:0] + 0];
-            r_s_axi_rdata[15:8] <=  r_ram[S_AXI_ARADDR[11:0] + 1];
-            r_s_axi_rdata[23:16] <= r_ram[S_AXI_ARADDR[11:0] + 2];
-            r_s_axi_rdata[31:24] <= r_ram[S_AXI_ARADDR[11:0] + 3];
+            r_s_axi_rdata[7:0] <=   r_ram[S_AXI_ARADDR[12:0] + 0];
+            r_s_axi_rdata[15:8] <=  r_ram[S_AXI_ARADDR[12:0] + 1];
+            r_s_axi_rdata[23:16] <= r_ram[S_AXI_ARADDR[12:0] + 2];
+            r_s_axi_rdata[31:24] <= r_ram[S_AXI_ARADDR[12:0] + 3];
 
 
 
@@ -252,25 +252,25 @@ always @(posedge S_AXI_ACLK) begin
             case(r_rd_cnt)
               
               'd1:begin
-                r_s_axi_rdata[7:0]    <=  r_ram[S_AXI_ARADDR[11:0] + 4 + 0];
-                r_s_axi_rdata[15:8]   <=  r_ram[S_AXI_ARADDR[11:0] + 4 + 1];
-                r_s_axi_rdata[23:16]  <=  r_ram[S_AXI_ARADDR[11:0] + 4 + 2];
-                r_s_axi_rdata[31:24]  <=  r_ram[S_AXI_ARADDR[11:0] + 4 + 3];
+                r_s_axi_rdata[7:0]    <=  r_ram[S_AXI_ARADDR[12:0] + 4 + 0];
+                r_s_axi_rdata[15:8]   <=  r_ram[S_AXI_ARADDR[12:0] + 4 + 1];
+                r_s_axi_rdata[23:16]  <=  r_ram[S_AXI_ARADDR[12:0] + 4 + 2];
+                r_s_axi_rdata[31:24]  <=  r_ram[S_AXI_ARADDR[12:0] + 4 + 3];
                 r_rd_cnt <= r_rd_cnt + 2'd1;
               end
               'd2:begin
-                r_s_axi_rdata[7:0]    <=  r_ram[S_AXI_ARADDR[11:0] + 8 + 0];
-                r_s_axi_rdata[15:8]   <=  r_ram[S_AXI_ARADDR[11:0] + 8 + 1];
-                r_s_axi_rdata[23:16]  <=  r_ram[S_AXI_ARADDR[11:0] + 8 + 2];
-                r_s_axi_rdata[31:24]  <=  r_ram[S_AXI_ARADDR[11:0] + 8 + 3];
+                r_s_axi_rdata[7:0]    <=  r_ram[S_AXI_ARADDR[12:0] + 8 + 0];
+                r_s_axi_rdata[15:8]   <=  r_ram[S_AXI_ARADDR[12:0] + 8 + 1];
+                r_s_axi_rdata[23:16]  <=  r_ram[S_AXI_ARADDR[12:0] + 8 + 2];
+                r_s_axi_rdata[31:24]  <=  r_ram[S_AXI_ARADDR[12:0] + 8 + 3];
                 r_rd_cnt <= r_rd_cnt + 2'd1;
 
               end
               'd3:begin
-                r_s_axi_rdata[7:0]    <=  r_ram[S_AXI_ARADDR[11:0] + 12 + 0];
-                r_s_axi_rdata[15:8]   <=  r_ram[S_AXI_ARADDR[11:0] + 12 + 1];
-                r_s_axi_rdata[23:16]  <=  r_ram[S_AXI_ARADDR[11:0] + 12 + 2];
-                r_s_axi_rdata[31:24]  <=  r_ram[S_AXI_ARADDR[11:0] + 12 + 3];
+                r_s_axi_rdata[7:0]    <=  r_ram[S_AXI_ARADDR[12:0] + 12 + 0];
+                r_s_axi_rdata[15:8]   <=  r_ram[S_AXI_ARADDR[12:0] + 12 + 1];
+                r_s_axi_rdata[23:16]  <=  r_ram[S_AXI_ARADDR[12:0] + 12 + 2];
+                r_s_axi_rdata[31:24]  <=  r_ram[S_AXI_ARADDR[12:0] + 12 + 3];
 
                 r_s_axi_rlast <= 1'b1;
 

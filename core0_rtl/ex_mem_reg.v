@@ -14,6 +14,8 @@ module ex_mem_reg (
     input   wire                    ex_mtype_i,  
     input   wire                    ex_mem_rw_i, 
     input   wire            [1:0]   ex_mem_width_i,
+    input   wire            [31:0]  ex_mem_addr_i,
+    input   wire                    ex_mem_rdtype_i,
 
     //to mem
     output  reg             [31:0]  exmem_reg_wdata_o,
@@ -27,6 +29,8 @@ module ex_mem_reg (
     output  reg                     exmem_mtype_o,          
     output  reg                     exmem_mem_rw_o,        
     output  reg             [1:0]   exmem_mem_width_o, 
+    output  reg             [31:0]  exmem_mem_addr_o,
+    output  reg                     exmem_mem_rdtype_o,
 
     //from fc
     input   wire                    fc_flush_exmem_i,
@@ -50,6 +54,8 @@ module ex_mem_reg (
             exmem_mtype_o <= 1'b0;
             exmem_mem_rw_o <= 1'b0;
             exmem_mem_width_o <= 2'b0;
+            exmem_mem_addr_o <= 32'd0;
+            exmem_mem_rdtype_o <= 1'b0;
         end
         else if(fc_stall_exmem_i == 1'b1)begin
             exmem_reg_wdata_o <= exmem_reg_wdata_o;
@@ -63,7 +69,8 @@ module ex_mem_reg (
             exmem_mtype_o <= exmem_mtype_o;
             exmem_mem_rw_o <= exmem_mem_rw_o;
             exmem_mem_width_o <= exmem_mem_width_o;
-
+            exmem_mem_addr_o <= exmem_mem_addr_o;
+            exmem_mem_rdtype_o <= exmem_mem_rdtype_o;
         end
         else if(fc_flush_exmem_i == 1'b1)begin
             exmem_reg_wdata_o <= 32'h0;
@@ -77,6 +84,8 @@ module ex_mem_reg (
             exmem_mtype_o <= 1'b0;
             exmem_mem_rw_o <= 1'b0;
             exmem_mem_width_o <= 2'b0;
+            exmem_mem_addr_o <= 32'd0;
+            exmem_mem_rdtype_o <= 1'd0;
         end
         else begin
             exmem_reg_wdata_o <= ex_reg_wdata_i;
@@ -90,6 +99,8 @@ module ex_mem_reg (
             exmem_mtype_o <= ex_mtype_i;
             exmem_mem_rw_o <= ex_mem_rw_i;
             exmem_mem_width_o <= ex_mem_width_i;
+            exmem_mem_addr_o <= ex_mem_addr_i;
+            exmem_mem_rdtype_o <= ex_mem_rdtype_i;
                 
         end
         

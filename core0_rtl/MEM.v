@@ -13,6 +13,8 @@ module MEM (
     input   wire                    exmem_mtype_i,          
     input   wire                    exmem_mem_rw_i,        
     input   wire            [1:0]   exmem_mem_width_i,  
+    input   wire            [31:0]  exmem_mem_addr_i,
+    input   wire                    exmem_mem_rdtype_i,
 
     //to mem_wb_reg
     output  reg             [31:0]  mem_reg_wdata_o,
@@ -81,8 +83,54 @@ module MEM (
         if(exmem_mtype_i == 1'b1)begin
             if(Dcache_ready_i == 1'b1)begin
                 case(exmem_mem_width_i)
-                    2'b01: mem_reg_wdata_o = { {24{Dcache_data_i[7]}}, Dcache_data_i[7:0] };
-                    2'b10: mem_reg_wdata_o = { {16{Dcache_data_i[15]}}, Dcache_data_i[15:0] };
+                    2'b01: begin
+                        case(exmem_mem_addr_i[1:0])
+                            2'b00:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[7]}}, Dcache_data_i[7:0] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[7:0] };
+                            end
+                            2'b01:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[15]}}, Dcache_data_i[15:8] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[15:8] };
+                            end
+                            2'b10:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[23]}}, Dcache_data_i[23:16] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[23:16] };
+                            end
+                            2'b11:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[31]}}, Dcache_data_i[31:24] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[31:24] };
+                            end
+                            default:;
+                        endcase
+                    end
+                    2'b10: begin
+                        case(exmem_mem_addr_i[1:0])
+                            2'b00:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[15]}}, Dcache_data_i[15:0] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[15:0] };
+                            end
+                            2'b10:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[31]}}, Dcache_data_i[31:16] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[31:16] };
+                            end
+                            default:;
+                        endcase
+                    end
+                    
+                    
                     2'b11: mem_reg_wdata_o = Dcache_data_i;
                     default: mem_reg_wdata_o = 32'h0;
                 endcase
@@ -90,11 +138,57 @@ module MEM (
             else begin
                 if(Dcache_in_Buffer == 1'b1) begin
                     case(exmem_mem_width_i)
-                        2'b01: mem_reg_wdata_o = { {24{Data_Buffer[7]}}, Data_Buffer[7:0] };
-                        2'b10: mem_reg_wdata_o = { {16{Data_Buffer[15]}}, Data_Buffer[15:0] };
-                        2'b11: mem_reg_wdata_o = Data_Buffer;
+                    2'b01: begin
+                        case(exmem_mem_addr_i[1:0])
+                            2'b00:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[7]}}, Dcache_data_i[7:0] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[7:0] };
+                            end
+                            2'b01:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[15]}}, Dcache_data_i[15:8] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[15:8] };
+                            end
+                            2'b10:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[23]}}, Dcache_data_i[23:16] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[23:16] };
+                            end
+                            2'b11:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[31]}}, Dcache_data_i[31:24] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[31:24] };
+                            end
+                            default:;
+                        endcase
+                    end
+                    2'b10: begin
+                        case(exmem_mem_addr_i[1:0])
+                            2'b00:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[15]}}, Dcache_data_i[15:0] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[15:0] };
+                            end
+                            2'b10:begin
+                                if(exmem_mem_rdtype_i == 1'd0)
+                                    mem_reg_wdata_o = { {24{Dcache_data_i[31]}}, Dcache_data_i[31:16] };
+                                else 
+                                    mem_reg_wdata_o = { {24{1'd0}}, Dcache_data_i[31:16] };
+                            end
+                            default:;
+                        endcase
+                    end
+                    
+                    
+                    2'b11: mem_reg_wdata_o = Dcache_data_i;
                     default: mem_reg_wdata_o = 32'h0;
-                endcase
+                    endcase
                 
                 end
                 else

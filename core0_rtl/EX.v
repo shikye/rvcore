@@ -36,12 +36,14 @@ module EX (
     output  wire                    ex_mtype_o,  
     output  wire                    ex_mem_rw_o,                 //and Dcache
     output  wire            [1:0]   ex_mem_width_o,
+    output  wire                    ex_mem_rdtype_o,     //0-signed 1-unsigned
+    //output  wire            [31:0]  ex_mem_addr_o,
 
 
     //to Dcache
     output  wire                    ex_req_Dcache_o,  //to Dcache and fc
     
-    output  wire            [31:0]  ex_mem_addr_o,
+    output  wire            [31:0]  ex_mem_addr_o,              //also to exmem
     output  wire            [1:0]   ex_mem_wrwidth_o,
     output  wire            [31:0]  ex_mem_wr_data_o,
 
@@ -55,6 +57,7 @@ module EX (
 
 );
 
+
 reg             [31:0]  ex_op_c_o;
 
 //mtype
@@ -62,11 +65,13 @@ assign ex_mtype_o = idex_mtype_i;
 assign ex_mem_rw_o = idex_mem_rw_i;
 assign ex_mem_width_o = idex_mem_width_i;
 
+
 //--------to Dcache
 assign ex_mem_rw_o = idex_mem_rw_i;
 assign ex_mem_addr_o = ex_op_c_o;
 assign ex_mem_wrwidth_o = idex_mem_width_i;
 assign ex_mem_wr_data_o = idex_mem_wr_data_i;
+assign ex_mem_rdtype_o = idex_mem_rdtype_i;
 
 assign ex_req_Dcache_o = idex_mtype_i ? 1'b1 : 1'b0;
 

@@ -145,7 +145,15 @@ always@(*)begin
 
     if(Icache_stall_flag == 1'b1)begin
         fc_stall_if_o = 1'b1;
+        fc_stall_id_o = 1'b1;
+        fc_stall_ex_o = 1'b1;
+        fc_stall_mem_o = 1'b1;
+        fc_stall_wb_o = 1'b1;
+
         fc_stall_ifid_o = 1'b1;
+        fc_stall_idex_o = 1'b1;
+        fc_stall_exmem_o = 1'b1;
+        fc_stall_memwb_o = 1'b1;
     end
 
     if(Dcache_stall_flag == 1'b1)begin
@@ -170,8 +178,23 @@ end
 
 
 //------------------- for flush
+reg ex_branch_flag_buffer, id_jump_flag_buffer;
 
-assign fc_jump_flag_if_o = ex_branch_flag_i | id_jump_flag_i;
+always@(posedge clk)begin
+    if(rst_n == 1'b0)begin
+        ex_branch_flag_buffer <= 1'b0;
+        id_jump_flag_buffer <= 1'b0;
+    end
+    else begin
+        ex_branch_flag_buffer <= ex_branch_flag_i;
+        id_jump_flag_buffer <= id_jump_flag_i;
+    end
+
+end
+
+
+assign fc_jump_flag_if_o = (~ex_branch_flag_buffer && ex_branch_flag_i) | (~id_jump_flag_buffer && id_jump_flag_i);   //需要上升沿，防止ex_branch持续为高，导致flag一直为高
+
 assign fc_jump_pc_if_o = ex_branch_flag_i ? ex_branch_pc_i : 
                             id_jump_flag_i ? id_jump_pc_i : 32'h0;
 
@@ -186,11 +209,11 @@ always@(*)begin
     fc_flush_ex_o = 1'b0; 
     fc_flush_mem_o = 1'b0; 
 
-    if(id_jump_flag_i == 1'b1)begin  //jtype
+    if(~id_jump_flag_buffer && id_jump_flag_i)begin  //jtype
         fc_flush_ifid_o = 1'b1;
         fc_flush_id_o = 1'b1;
     end
-    else if(ex_branch_flag_i == 1'b1)begin //btype
+    else if(~ex_branch_flag_buffer && ex_branch_flag_i)begin //btype
         fc_flush_ifid_o = 1'b1;
         fc_flush_idex_o = 1'b1;
         fc_flush_id_o = 1'b1; 

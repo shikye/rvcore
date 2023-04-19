@@ -107,6 +107,7 @@ assign Rvcore_data_o = bc_data_o;
     wire     [31:0] ex_mem_wr_data_o;
     wire     [1:0]  ex_mem_wrwidth_o;
     wire     [31:0] ex_mem_addr_o;
+    wire            ex_mem_rdtype_o;
 
     wire            ex_branch_flag_o;
     wire     [31:0] ex_branch_pc_o;
@@ -124,6 +125,8 @@ assign Rvcore_data_o = bc_data_o;
     wire             exmem_mtype_o;          
     wire             exmem_mem_rw_o;        
     wire     [1:0]   exmem_mem_width_o;    
+    wire     [31:0]  exmem_mem_addr_o;
+    wire             exmem_mem_rdtype_o;
     //MEM
     wire     [31:0]  mem_reg_wdata_o;
     wire     [4:0]   mem_reg_waddr_o;
@@ -429,6 +432,7 @@ assign Rvcore_data_o = bc_data_o;
         .ex_mtype_o(ex_mtype_o),  
         .ex_mem_rw_o(ex_mem_rw_o), 
         .ex_mem_width_o(ex_mem_width_o),
+        .ex_mem_rdtype_o(ex_mem_rdtype_o),
 
         .ex_req_Dcache_o(ex_req_Dcache_o),
 
@@ -459,6 +463,8 @@ assign Rvcore_data_o = bc_data_o;
         .ex_mtype_i(ex_mtype_o),  
         .ex_mem_rw_i(ex_mem_rw_o), 
         .ex_mem_width_i(ex_mem_width_o),
+        .ex_mem_addr_i(ex_mem_addr_o),
+        .ex_mem_rdtype_i(ex_mem_rdtype_o),
 
         .exmem_reg_wdata_o(exmem_reg_wdata_o),
         .exmem_reg_waddr_o(exmem_reg_waddr_o),
@@ -471,6 +477,8 @@ assign Rvcore_data_o = bc_data_o;
         .exmem_mtype_o(exmem_mtype_o),          
         .exmem_mem_rw_o(exmem_mem_rw_o),        
         .exmem_mem_width_o(exmem_mem_width_o),      
+        .exmem_mem_addr_o(exmem_mem_addr_o),
+        .exmem_mem_rdtype_o(exmem_mem_rdtype_o),
 
         .fc_flush_exmem_i(fc_flush_exmem_o),
         .fc_stall_exmem_i(fc_stall_exmem_o)
@@ -490,7 +498,9 @@ assign Rvcore_data_o = bc_data_o;
 
         .exmem_mtype_i(exmem_mtype_o),          
         .exmem_mem_rw_i(exmem_mem_rw_o),        
-        .exmem_mem_width_i(exmem_mem_width_o),      
+        .exmem_mem_width_i(exmem_mem_width_o),    
+        .exmem_mem_addr_i(exmem_mem_addr_o),  
+        .exmem_mem_rdtype_i(exmem_mem_rdtype_o),
 
         .mem_reg_wdata_o(mem_reg_wdata_o),
         .mem_reg_waddr_o(mem_reg_waddr_o),

@@ -1,4 +1,4 @@
-`include "define.v"
+ `include "define.v"
 module ID (
     input   wire                    clk,
     input   wire                    rst_n,
@@ -157,6 +157,12 @@ module ID (
             Buffer_number <= 2'd0;
         end
 
+        else if(recover_flag == 1'b1)begin
+            Icache_in_Buffer <= 1'd1;
+            Buffer_to_id <= Icache_inst_i;
+        
+        end
+
         else begin
             
             Inst_Buffer[0] <= Icache_inst_i;
@@ -172,6 +178,12 @@ module ID (
                     Buffer_number <= 2'd0;
                     Icache_in_Buffer <= 1'd0;
                 end
+                else begin
+                    Buffer_to_id <= Icache_inst_i;
+                    Buffer_number <= 2'd0;
+                    Icache_in_Buffer <= 1'd0;
+                end
+                
 
             end
         end
@@ -185,21 +197,27 @@ module ID (
     reg        load_use_flag;
     reg        recover_flag;
 
+    reg [31:0]  recover_inst;
+
     assign id_load_use_flag_o = load_use_flag;
 
    
     always @(*) begin  
-        if(( rs1 == reg_load_use || rs2 == reg_load_use ) && reg_load_use != 5'd0)
+        if(( Icache_inst_i[19:15] == reg_load_use || Icache_inst_i[24:20] == reg_load_use ) && reg_load_use != 5'd0)
             load_use_flag = 1'b1;
         else 
             load_use_flag = 1'b0;
     end
 
     always@(posedge clk or negedge rst_n) begin
-        if(rst_n == 1'b0)
+        if(rst_n == 1'b0) begin
             recover_flag <= 1'b0;
-        else if(load_use_flag == 1'b1)
+            recover_inst <= 32'd0;
+        end
+        else if(load_use_flag == 1'b1) begin
             recover_flag <= 1'b1;
+            recover_inst <= Icache_inst_i;
+        end
         else 
             recover_flag <= 1'b0;
     end
@@ -210,7 +228,7 @@ module ID (
             reg_load_use <= 5'd0;
         end
         else begin
-            if(opcode == `Itype_L) begin
+            if(Icache_inst_i == `Itype_L) begin
                 inst_load_use <= inst;
                 reg_load_use <= rd;
             end
@@ -222,7 +240,7 @@ module ID (
     end
 
 //-----------------------------------------
-    assign inst = recover_flag ? inst_load_use : (fc_stall_id_i == 1'b1) ? 32'h0 : Icache_in_Buffer ? Buffer_to_id : flush_flag ? 32'h0 : Icache_ready_i ? Icache_inst_i : 32'h0;
+    assign inst = load_use_flag ? 32'd0 : recover_flag ? recover_inst : (fc_stall_id_i == 1'b1) ? 32'h0 :  flush_flag ? 32'h0 : Icache_ready_i ? Icache_inst_i :Icache_in_Buffer ? Buffer_to_id : 32'h0;
 
 
 
