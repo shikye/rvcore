@@ -179,7 +179,8 @@ module ID (
                     Icache_in_Buffer <= 1'd0;
                 end
                 else begin
-                    Buffer_to_id <= Icache_inst_i;
+                    
+                    Buffer_to_id <= 32'd0;
                     Buffer_number <= 2'd0;
                     Icache_in_Buffer <= 1'd0;
                 end
@@ -240,7 +241,7 @@ module ID (
     end
 
 //-----------------------------------------
-    assign inst = load_use_flag ? 32'd0 : recover_flag ? recover_inst : (fc_stall_id_i == 1'b1) ? 32'h0 :  flush_flag ? 32'h0 : Icache_ready_i ? Icache_inst_i :Icache_in_Buffer ? Buffer_to_id : 32'h0;
+    assign inst = load_use_flag ? 32'd0 : recover_flag ? recover_inst :  flush_flag ? 32'h0 :(fc_stall_id_i == 1'b1) ? 32'h0 : Icache_ready_i ? Icache_inst_i : Icache_in_Buffer ? Buffer_to_id :  32'h0;  //顺序重要
 
 
 

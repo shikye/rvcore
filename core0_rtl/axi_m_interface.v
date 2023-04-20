@@ -1,7 +1,5 @@
 module axi_m#
 (
-    parameter integer BURST_LEN	= 4,
-    parameter integer BURST_TYPE	= 4,     //2'b00 FIXED, 2'b01 INCR
     parameter integer WIDTH_ID	= 1,
     parameter integer WIDTH_AD	= 32,
     parameter integer WIDTH_DA	= 32
@@ -91,6 +89,8 @@ localparam  R_Receive   = 1;
 	endfunction
 
 /*********************reg_def*******************************/
+reg [3:0]                           r_m_axi_awlen;
+reg [1:0]                           r_m_axi_awburst;
 reg [WIDTH_AD - 1 : 0]              r_m_axi_awaddr;
 reg                                 r_m_axi_awvalid;
 
@@ -100,6 +100,8 @@ reg                                 r_m_axi_wvalid;
 
 reg                                 r_m_axi_bready;
 
+reg [3:0]                           r_m_axi_arlen;
+reg [1:0]                           r_m_axi_arburst;
 reg [WIDTH_AD - 1 : 0]              r_m_axi_araddr;
 reg                                 r_m_axi_arvalid;
 
@@ -112,12 +114,18 @@ reg [2:0]                           r_rburst_cnt;
 
 
 
+wire [1:0]                           r_highbits_for_SLV;
+
+assign r_highbits_for_SLV = Rvcore_addr_i[29:28];
+
+
+
 
 /*********************combination***************************/
 assign M_AXI_AWID       = 'd0;
-assign M_AXI_AWLEN      = BURST_LEN;
+assign M_AXI_AWLEN      = r_m_axi_awlen;                    //00-FIXED,01-INCR
 assign M_AXI_AWSIZE     = clogb2(WIDTH_DA/8 - 1);
-assign M_AXI_AWBURST    = BURST_TYPE;
+assign M_AXI_AWBURST    = r_m_axi_awburst;
 assign M_AXI_AWADDR     = r_m_axi_awaddr;
 assign M_AXI_AWVALID    = r_m_axi_awvalid;
 
@@ -132,9 +140,9 @@ assign M_AXI_BREADY     = 1'b1;
 
 
 assign M_AXI_ARID       = 'd0;
-assign M_AXI_ARLEN      = BURST_LEN;
+assign M_AXI_ARLEN      = r_m_axi_arlen;
 assign M_AXI_ARSIZE     = clogb2(WIDTH_DA/8 - 1);
-assign M_AXI_ARBURST    = BURST_TYPE;       
+assign M_AXI_ARBURST    = r_m_axi_arburst;       
 assign M_AXI_ARADDR     = r_m_axi_araddr;
 assign M_AXI_ARVALID    = r_m_axi_arvalid;
 
@@ -150,18 +158,27 @@ always @(posedge M_AXI_ACLK) begin
   if(M_AXI_ARESETN == 1'b0) begin
     W_state <= W_Idle;
 
-    r_m_axi_wvalid <= 1'b0;
+    r_m_axi_awlen <= 4'd0;
+    r_m_axi_awburst <= 2'd0;
     r_m_axi_awaddr <= 32'h0;
+    r_m_axi_awvalid <= 1'b0;
 
     r_wdata <= 128'b0;
-    r_wburst_cnt <= 2'd0;
     r_m_axi_wlast <= 1'b0;
+    r_m_axi_wvalid <= 1'd0;
+
+
+    r_wburst_cnt <= 2'd0;
+    
 
     axi_wr_over_o <= 1'b0;
 
 
   end
   else begin
+
+
+
     case(W_state)
       W_Idle:begin
 
@@ -170,12 +187,33 @@ always @(posedge M_AXI_ACLK) begin
         if(M_AXI_AWVALID == 1'b1 && M_AXI_AWREADY == 1'b1)begin
           r_m_axi_awvalid <= 1'b0;
 
+
           r_m_axi_wvalid <= 1'b1;
           r_m_axi_wdata <= Rvcore_data_i[31:0];
 
-          W_state <= W_Trans;
+
+          if(r_m_axi_awlen == 4'd4)begin
+            W_state <= W_Trans;
+          end
+          else begin
+            r_m_axi_wlast <= 1'd1;
+            W_state <= W_Wait;
+          end
+
         end
-        else if( (Rvcore_valid_req_i == 1'b1) && Rvcore_rw_i == 1'b0) begin
+        else if( (Rvcore_valid_req_i == 1'b1) && Rvcore_rw_i == 1'b0) begin 
+
+          case(r_highbits_for_SLV)
+            2'b00,2'b01:begin //rom and ram
+              r_m_axi_awlen <= 4'd4;
+              r_m_axi_awburst <= 2'b01; //INCR
+            end
+            2'b10,2'b11:begin //timer and uart
+              r_m_axi_awlen <= 4'd1;
+              r_m_axi_awburst <= 2'b00; //FIXED
+            end
+
+          endcase
 
           r_m_axi_awvalid <= 1'b1;
           r_m_axi_awaddr <= Rvcore_addr_i;
@@ -221,6 +259,10 @@ always @(posedge M_AXI_ACLK) begin
       end
 
       W_Wait:begin
+
+        r_m_axi_wlast <= 1'b0;
+        r_m_axi_wvalid <= 1'b0;
+
         if(M_AXI_BVALID == 1'b1 && M_AXI_BREADY == 1'b1)begin
 
           W_state <= W_Idle;
@@ -247,8 +289,13 @@ always@(posedge M_AXI_ACLK)begin
   if(M_AXI_ARESETN == 1'b0) begin
     R_state <= R_Idle;
 
+    r_m_axi_arlen <= 4'd0;
+    r_m_axi_arburst <= 2'd0;
     r_m_axi_araddr <= 32'h0;
     r_m_axi_arvalid <= 1'b0;
+
+
+
 
     axi_rd_over_o <= 1'b0;
     axi_data_o <= 128'h0;
@@ -266,6 +313,19 @@ always@(posedge M_AXI_ACLK)begin
         if((Rvcore_valid_req_i == 1'b1) && Rvcore_rw_i == 1'b1) begin
           r_m_axi_araddr <= Rvcore_addr_i;
           r_m_axi_arvalid <= 1'b1;
+
+          case(r_highbits_for_SLV)
+            2'b00,2'b01:begin //rom and ram
+              r_m_axi_arlen <= 4'd4;
+              r_m_axi_arburst <= 2'b01; //INCR
+            end
+            2'b10,2'b11:begin //timer and uart
+              r_m_axi_arlen <= 4'd1;
+              r_m_axi_arburst <= 2'b00; //FIXED
+            end
+
+          endcase
+
         end
         else if(M_AXI_ARVALID == 1'b1 && M_AXI_ARREADY == 1'b1)begin
           r_m_axi_arvalid <= 1'b0;
@@ -279,41 +339,58 @@ always@(posedge M_AXI_ACLK)begin
 
 
       R_Receive:begin
-        if(M_AXI_RVALID == 1'b1 && M_AXI_RREADY == 1'b1) begin
-          case(r_rburst_cnt)
-            2'd0:begin
-              axi_data_o <= {axi_data_o[127:32], M_AXI_RDATA};
-              r_rburst_cnt <= r_rburst_cnt + 2'd1;
-            end
-            2'd1:begin
-              axi_data_o <= {axi_data_o[127:64], M_AXI_RDATA, axi_data_o[31:0]};
-              r_rburst_cnt <= r_rburst_cnt + 2'd1;
-            end
-            2'd2:begin
-              axi_data_o <= {axi_data_o[127:96], M_AXI_RDATA, axi_data_o[63:0]};
-              r_rburst_cnt <= r_rburst_cnt + 2'd1;
-            end
-            2'd3:begin
-              axi_data_o <= {M_AXI_RDATA, axi_data_o[95:0]};
-              r_rburst_cnt <= 2'd0;
 
-              axi_rd_over_o <= 1'b1;
+        if(r_m_axi_arlen == 4'd4)begin
 
-              R_state <= R_Idle;
+          if(M_AXI_RVALID == 1'b1 && M_AXI_RREADY == 1'b1) begin
+            case(r_rburst_cnt)
+              2'd0:begin
+                axi_data_o <= {axi_data_o[127:32], M_AXI_RDATA};
+                r_rburst_cnt <= r_rburst_cnt + 2'd1;
+              end
+              2'd1:begin
+                axi_data_o <= {axi_data_o[127:64], M_AXI_RDATA, axi_data_o[31:0]};
+                r_rburst_cnt <= r_rburst_cnt + 2'd1;
+              end
+              2'd2:begin
+                axi_data_o <= {axi_data_o[127:96], M_AXI_RDATA, axi_data_o[63:0]};
+                r_rburst_cnt <= r_rburst_cnt + 2'd1;
+              end
+              2'd3:begin
+                axi_data_o <= {M_AXI_RDATA, axi_data_o[95:0]};
+                r_rburst_cnt <= 2'd0;
 
-            end
+                axi_rd_over_o <= 1'b1;
 
+                R_state <= R_Idle;
+
+              end
+
+            
+              default:;
+            endcase
           
-            default:;
-          endcase
-        
+          
+          end
         
         end
+
+        else if (r_m_axi_arlen == 4'd1)begin
+          if(M_AXI_RVALID == 1'b1 && M_AXI_RREADY == 1'b1) begin
+            axi_data_o <= {axi_data_o[127:32], M_AXI_RDATA};
+            axi_rd_over_o <= 1'b1;
+            R_state <= R_Idle;
+          end
             
-      end
+      
+        end
+    end
     
-      default:;
-    endcase
+
+
+
+    default:;
+  endcase
   
   
   end

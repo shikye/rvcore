@@ -19,6 +19,16 @@ module bus_controller(
     input   wire            [31:0]  Dcache_wb_addr_i,
     input   wire            [127:0] Dcache_wb_data_i,
 
+    //from ex
+    input   wire                    ex_req_bus_i,
+    input   wire                    ex_mem_rw_i,
+    input   wire            [31:0]  ex_mem_addr_i,
+    input   wire            [31:0]  ex_mem_data_i,
+
+    //to mem
+    output  reg                    bc_bus_ready_o,  //to mem and fc
+    output  reg            [31:0]  bc_bus_data_o,
+
     //to Dcache
     output  reg                     bc_Dcache_ready_o,
     output  reg             [127:0] bc_Dcache_data_o,
@@ -72,6 +82,8 @@ reg valid_req;
 localparam S_IDLE = 0;
 localparam S_USING = 1;
 
+reg user_bus;   //0-Dcache,1-UART或TIMER 不经过Dcache的访存
+
 reg  State;
 
 
@@ -89,6 +101,9 @@ always@(posedge clk)begin
         bc_Dcache_ready_o <= 1'b0;
         bc_Dcache_data_o <= 128'd0;
 
+        bc_bus_ready_o <= 1'b0;
+        bc_bus_data_o <= 32'd0;
+
         bc_valid_req_o <= 1'd0;
         bc_rw_o <= 1'd0;
         bc_addr_o <= 32'd0;
@@ -101,6 +116,8 @@ always@(posedge clk)begin
         bus_data <= 128'd0;
 
         Icache_req_again <= 1'b0;
+
+        user_bus <= 1'b0;
     
     end
     else begin
@@ -108,41 +125,79 @@ always@(posedge clk)begin
             S_IDLE:begin
                 bc_Icache_ready_o <= 1'b0;
                 bc_Dcache_ready_o <= 1'b0;
+                bc_bus_ready_o <= 1'b0;
 
                 bus_data <= 128'd0;
                 
 
-                if( (Icache_valid_req_i && ~fc_jump_flag_Icache_i)|| Dcache_rd_req_i || Dcache_wb_req_i || Icache_req_again)begin
+                if( (Icache_valid_req_i && ~fc_jump_flag_Icache_i)|| Dcache_rd_req_i || Dcache_wb_req_i || Icache_req_again || ex_req_bus_i)begin
                     
                     State <= S_USING;
                     valid_req <= 1'b1;
 
-                    if( (Icache_req_again || (Icache_valid_req_i && ~fc_jump_flag_Icache_i) ) && (Dcache_rd_req_i || Dcache_wb_req_i))begin  //Dcache prior
+                    if( (Icache_req_again || (Icache_valid_req_i && ~fc_jump_flag_Icache_i) ) && (Dcache_rd_req_i || Dcache_wb_req_i || ex_req_bus_i))begin  //Dcache prior
                         bus_user <= 2'd2;
                         Icache_req_again <= 1'b1;
                     
                         if(Dcache_rd_req_i)begin
+                            user_bus <= 1'b0;
                             bus_rw <= 1'b1;
                             bus_addr <= Dcache_rd_addr_i;
                         end
-                        else begin
-
+                        else if(Dcache_wb_req_i) begin
+                            user_bus <= 1'b0;
                             bus_rw <= 1'b0;
                             bus_addr <= Dcache_wb_addr_i;
                             bus_data <= Dcache_wb_data_i;
                         end
+                        else begin
+                            user_bus <= 1'b1;
+
+                            case(ex_mem_rw_i)
+                                1'b0:begin
+                                    bus_rw <= 1'b0;
+                                    bus_addr <= ex_mem_addr_i;
+                                    bus_data <= ex_mem_data_i;
+                                end
+                                1'b1:begin
+                                    bus_rw <= 1'b1;
+                                    bus_addr <= Dcache_rd_addr_i;
+                                end
+
+                            endcase
+                        
+                        end
                     end
-                    else if(Dcache_rd_req_i || Dcache_wb_req_i)begin
+                    else if(Dcache_rd_req_i || Dcache_wb_req_i || ex_req_bus_i)begin
                         bus_user <= 2'd2;
                     
                         if(Dcache_rd_req_i)begin
+                            user_bus <= 1'b0;
                             bus_rw <= 1'b1;
                             bus_addr <= Dcache_rd_addr_i;
                         end
-                        else begin
+                        else if(Dcache_wb_req_i) begin
+                            user_bus <= 1'b0;
                             bus_rw <= 1'b0;
                             bus_addr <= Dcache_wb_addr_i;
                             bus_data <= Dcache_wb_data_i;
+                        end
+                        else begin
+                            user_bus <= 1'b1;
+
+                            case(ex_mem_rw_i)
+                                1'b0:begin
+                                    bus_rw <= 1'b0;
+                                    bus_addr <= ex_mem_addr_i;
+                                    bus_data <= ex_mem_data_i;
+                                end
+                                1'b1:begin
+                                    bus_rw <= 1'b1;
+                                    bus_addr <= ex_mem_addr_i;
+                                end
+
+                            endcase
+                        
                         end
                     end
                     else if(Icache_req_again)begin
@@ -163,6 +218,11 @@ always@(posedge clk)begin
             
 
             S_USING:begin
+
+                if(user_bus == 1'b1)begin           //若ex_bus与Icache同时req，ex_bus会比Icache早一个周期到达bc
+                    if(Icache_valid_req_i)          //所以在第二个周期还应该判断是否ex与Icache请求冲突
+                        Icache_req_again <= 1'b1;
+                end
 
 
 
@@ -188,9 +248,15 @@ always@(posedge clk)begin
                             bus_user <= 2'd0;
                         end
                         2'd2:begin
-                            bc_Dcache_ready_o <= 1'b1;
-                            bc_Dcache_data_o <= axi_data_i;
-                            bus_user <= 2'd0;
+                            if(user_bus == 1'b0)begin
+                                bc_Dcache_ready_o <= 1'b1;
+                                bc_Dcache_data_o <= axi_data_i;
+                                bus_user <= 2'd0;
+                            end 
+                            else begin
+                                bc_bus_ready_o <= 1'b1;
+                                bc_bus_data_o <= axi_data_i[31:0];
+                            end
                         end
                         default:;
                     endcase
@@ -201,7 +267,14 @@ always@(posedge clk)begin
 
                     State <= S_IDLE;
 
-                    bc_Dcache_ready_o <= 1'b1;
+                    if(user_bus == 1'b0)begin
+                        bc_Dcache_ready_o <= 1'b1;
+                    end 
+                    else begin
+                        bc_bus_ready_o <= 1'b1;
+                    end
+
+                    
                 end
                 
 

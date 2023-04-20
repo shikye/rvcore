@@ -22,6 +22,8 @@ module Flow_Ctrl(                  //Flush, Stall, Jump
     //from ex
     input   wire                    ex_req_Dcache_i,
 
+    input   wire                    ex_req_bus_i,
+
     //from Icache
     input   wire                    Icache_hit_i,
 
@@ -31,6 +33,7 @@ module Flow_Ctrl(                  //Flush, Stall, Jump
     //from bus_controller
     input   wire                    bc_Icache_ready_i,
     input   wire                    bc_Dcache_ready_i,
+    input   wire                    bc_bus_ready_i,
     input   wire                    core_WAIT_i,
 
     
@@ -84,15 +87,17 @@ reg Icache_stall_flag;
             Icache_stall_flag = 1'b0;
         end
 
+        else if( (bc_Icache_ready_i == 1'b1) || (fc_jump_flag_if_o == 1'b1 && Icache_hit_i == 1'b1) ||              //最后一个分支是重点！！！！！！！
+            (if_req_Icache_i == 1'b1 && Icache_hit_i == 1'b1) ) begin
+            Icache_stall_flag = 1'b0;
+        end
+
         else if(if_req_Icache_i == 1'b1 && Icache_hit_i == 1'b0) begin // hit can be get instantly    ---------------------------------！！！！！！！no delay， so no need to back
             Icache_stall_flag = 1'b1;                                   //notice: has a first and second sequence in a time
         end                                                     //priority is higher than next branch
 
 
-        else if( (bc_Icache_ready_i == 1'b1) || (fc_jump_flag_if_o == 1'b1 && Icache_hit_i == 1'b1) ||              //最后一个分支是重点！！！！！！！
-                (if_req_Icache_i == 1'b1 && Icache_hit_i == 1'b1) ) begin
-            Icache_stall_flag = 1'b0;
-        end
+        
         
         else 
             Icache_stall_flag = Icache_stall_flag;
@@ -106,10 +111,11 @@ reg Dcache_stall_flag;
 always@(*) begin
     if(rst_n == 1'b0)
         Dcache_stall_flag = 1'b0;
-    else if(ex_req_Dcache_i == 1'b1 && Dcache_hit_i == 1'b0)
-        Dcache_stall_flag = 1'b1;
-    else if(bc_Dcache_ready_i == 1'b1 || (ex_req_Dcache_i == 1'b1 && Dcache_hit_i == 1'b1) )  // one open condition
+    else if( bc_bus_ready_i || bc_Dcache_ready_i == 1'b1 || (ex_req_Dcache_i == 1'b1 && Dcache_hit_i == 1'b1) )  // one open condition
         Dcache_stall_flag = 1'b0;
+    else if( (ex_req_Dcache_i == 1'b1 && Dcache_hit_i == 1'b0)  ||  ex_req_bus_i)
+        Dcache_stall_flag = 1'b1;
+    
 end
 
 

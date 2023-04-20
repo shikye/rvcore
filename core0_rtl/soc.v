@@ -116,6 +116,24 @@ module soc(
     wire   [ 1:0]                           S2_ARBURST;
     wire                                    S2_ARVALID;
     wire                                    S2_RREADY;
+    wire   [2-1:0]                          S3_AWID;
+    wire   [32-1:0]                         S3_AWADDR;
+    wire   [ 3:0]                           S3_AWLEN;
+    wire   [ 2:0]                           S3_AWSIZE;
+    wire   [ 1:0]                           S3_AWBURST;
+    wire                                    S3_AWVALID;
+    wire   [32-1:0]                         S3_WDATA;
+    wire   [4-1:0]                          S3_WSTRB;
+    wire                                    S3_WLAST;
+    wire                                    S3_WVALID;
+    wire                                    S3_BREADY;
+    wire   [2-1:0]                          S3_ARID;
+    wire   [32-1:0]                         S3_ARADDR;
+    wire   [ 3:0]                           S3_ARLEN;
+    wire   [ 2:0]                           S3_ARSIZE;
+    wire   [ 1:0]                           S3_ARBURST;
+    wire                                    S3_ARVALID;
+    wire                                    S3_RREADY;
 
     wire                                    core_WAIT;
 
@@ -145,6 +163,18 @@ module soc(
     wire                                    ram_AXI_RLAST;     
     wire                                    ram_AXI_RVALID;   
 
+    //timer
+    wire                                    timer_AXI_AWREADY;   
+    wire                                    timer_AXI_WREADY;    
+    wire [2-1 : 0]                          timer_AXI_BID;       
+    wire [1 : 0]                            timer_AXI_BRESP;     
+    wire                                    timer_AXI_BVALID;    
+    wire                                    timer_AXI_ARREADY;   
+    wire [2-1 : 0]                          timer_AXI_RID;       
+    wire [32-1 : 0]                         timer_AXI_RDATA;     
+    wire [1 : 0]                            timer_AXI_RRESP;     
+    wire                                    timer_AXI_RLAST;     
+    wire                                    timer_AXI_RVALID;   
 
 
 
@@ -344,15 +374,15 @@ axi_interconnect ai
     .S2_AWSIZE(S2_AWSIZE),
     .S2_AWBURST(S2_AWBURST),
     .S2_AWVALID(S2_AWVALID),
-    .S2_AWREADY(1'd0),
+    .S2_AWREADY(timer_AXI_AWREADY),
     .S2_WDATA(S2_WDATA),
     .S2_WSTRB(S2_WSTRB),
     .S2_WLAST(S2_WLAST),
     .S2_WVALID(S2_WVALID),
-    .S2_WREADY(1'd0),
-    .S2_BID(2'd0),
-    .S2_BRESP(2'd0),
-    .S2_BVALID(1'd0),
+    .S2_WREADY(timer_AXI_WREADY),
+    .S2_BID(timer_AXI_BID),
+    .S2_BRESP(timer_AXI_BRESP),
+    .S2_BVALID(timer_AXI_BVALID),
     .S2_BREADY(S2_BREADY),
     .S2_ARID(S2_ARID),
     .S2_ARADDR(S2_ARADDR),
@@ -360,13 +390,48 @@ axi_interconnect ai
     .S2_ARSIZE(S2_ARSIZE),
     .S2_ARBURST(S2_ARBURST),
     .S2_ARVALID(S2_ARVALID),
-    .S2_ARREADY(1'd0),
-    .S2_RID(2'd0),
-    .S2_RDATA(32'd0),
-    .S2_RRESP(2'd0),
-    .S2_RLAST(1'd0),
-    .S2_RVALID(1'd0),
+    .S2_ARREADY(timer_AXI_ARREADY),
+    .S2_RID(timer_AXI_RID),
+    .S2_RDATA(timer_AXI_RDATA),
+    .S2_RRESP(timer_AXI_RRESP),
+    .S2_RLAST(timer_AXI_RLAST),
+    .S2_RVALID(timer_AXI_RVALID),
     .S2_RREADY(S2_RREADY),
+
+    .S3_AWID(S3_AWID),
+    .S3_AWADDR(S3_AWADDR),
+    .S3_AWLEN(S3_AWLEN),
+    .S3_AWSIZE(S3_AWSIZE),
+    .S3_AWBURST(S3_AWBURST),
+    .S3_AWVALID(S3_AWVALID),
+    .S3_AWREADY(1'd0),
+    .S3_WDATA(S3_WDATA),
+    .S3_WSTRB(S3_WSTRB),
+    .S3_WLAST(S3_WLAST),
+    .S3_WVALID(S3_WVALID),
+    .S3_WREADY(1'd0),
+    .S3_BID(2'd0),
+    .S3_BRESP(2'd0),
+    .S3_BVALID(1'd0),
+    .S3_BREADY(S3_BREADY),
+    .S3_ARID(S3_ARID),
+    .S3_ARADDR(S3_ARADDR),
+    .S3_ARLEN(S3_ARLEN),
+    .S3_ARSIZE(S3_ARSIZE),
+    .S3_ARBURST(S3_ARBURST),
+    .S3_ARVALID(S3_ARVALID),
+    .S3_ARREADY(1'd0),
+    .S3_RID(2'd0),
+    .S3_RDATA(32'd0),
+    .S3_RRESP(2'd0),
+    .S3_RLAST(1'd0),
+    .S3_RVALID(1'd0),
+    .S3_RREADY(S3_RREADY),
+
+
+
+
+
     .core_WAIT(core_WAIT)
 );
 
@@ -439,6 +504,41 @@ axi_ram ram
 		.S_AXI_RLAST(ram_AXI_RLAST)     ,
 		.S_AXI_RVALID(ram_AXI_RVALID)    ,
 		.S_AXI_RREADY(S1_RREADY)    
+);
+
+timer timer_ins(
+    .S_AXI_ACLK(clk)      ,
+    .S_AXI_ARESETN(rst_n)   ,
+    .S_AXI_AWID(S2_AWID)      ,
+    .S_AXI_AWADDR(S2_AWADDR)    ,
+    .S_AXI_AWLEN(S2_AWLEN)     ,
+    .S_AXI_AWSIZE(S2_AWSIZE)    ,
+    .S_AXI_AWBURST(S2_AWBURST)   ,
+    .S_AXI_AWVALID(S2_AWVALID)   ,
+    .S_AXI_AWREADY(timer_AXI_AWREADY)   ,
+    .S_AXI_WDATA(S2_WDATA)     ,
+    .S_AXI_WSTRB(S2_WSTRB)     ,
+    .S_AXI_WLAST(S2_WLAST)     ,
+    .S_AXI_WVALID(S2_WVALID)    ,
+    .S_AXI_WREADY(timer_AXI_WREADY)    ,
+    .S_AXI_BID(timer_AXI_BID)       ,
+    .S_AXI_BRESP(timer_AXI_BRESP)     ,
+    .S_AXI_BVALID(timer_AXI_BVALID)    ,
+    .S_AXI_BREADY(S2_BREADY)    ,
+    .S_AXI_ARID(S2_ARID)      ,
+    .S_AXI_ARADDR(S2_ARADDR)    ,
+    .S_AXI_ARLEN(S2_ARLEN)     ,
+    .S_AXI_ARSIZE(S2_ARSIZE)    ,
+    .S_AXI_ARBURST(S2_ARBURST)   ,
+    .S_AXI_ARVALID(S2_ARVALID)   ,
+    .S_AXI_ARREADY(timer_AXI_ARREADY)   ,
+    .S_AXI_RID(timer_AXI_RID)       ,
+    .S_AXI_RDATA(timer_AXI_RDATA)     ,
+    .S_AXI_RRESP(timer_AXI_RRESP)     ,
+    .S_AXI_RLAST(timer_AXI_RLAST)     ,
+    .S_AXI_RVALID(timer_AXI_RVALID)    ,
+    .S_AXI_RREADY(S2_RREADY) 
+
 );
 
 

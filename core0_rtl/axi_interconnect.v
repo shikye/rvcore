@@ -5,9 +5,10 @@ module axi_interconnect
                 , WIDTH_DA    =32 // data width
                 , WIDTH_DS    =(WIDTH_DA/8)  // data strobe width
                 , WIDTH_SID   =(WIDTH_MID+WIDTH_ID)// ID for slave 从机用主机ID+事务ID来辨别某一主机事务
-                , ADDR_BASE0  =32'h0000_0000 , ADDR_LENGTH0=28  //256MB
-                , ADDR_BASE1  =32'h1000_0000 , ADDR_LENGTH1=28 
-                , ADDR_BASE2  =32'h2000_0000 , ADDR_LENGTH2=28
+                , ADDR_BASE0  =32'h0000_0000 , ADDR_LENGTH0=28  //256MB rom
+                , ADDR_BASE1  =32'h1000_0000 , ADDR_LENGTH1=28  //ram
+                , ADDR_BASE2  =32'h2000_0000 , ADDR_LENGTH2=28  //timer
+                , ADDR_BASE3  =32'h3000_0000 , ADDR_LENGTH3=28  //uart
        )
 (
        input   wire                      ARESETn
@@ -190,6 +191,44 @@ module axi_interconnect
      , input   wire                      S2_RVALID
      , output  wire                      S2_RREADY
 
+     //--------------------------------------------------------------
+     , output  wire   [WIDTH_SID-1:0]    S3_AWID
+     , output  wire   [WIDTH_AD-1:0]     S3_AWADDR
+     , output  wire   [ 3:0]             S3_AWLEN
+     , output  wire   [ 2:0]             S3_AWSIZE
+     , output  wire   [ 1:0]             S3_AWBURST
+     , output  wire                      S3_AWVALID
+     , input   wire                      S3_AWREADY
+     
+     , output  wire   [WIDTH_DA-1:0]     S3_WDATA
+     , output  wire   [WIDTH_DS-1:0]     S3_WSTRB
+     , output  wire                      S3_WLAST
+     , output  wire                      S3_WVALID
+     , input   wire                      S3_WREADY
+     
+     , input   wire   [WIDTH_SID-1:0]    S3_BID
+     , input   wire   [ 1:0]             S3_BRESP
+     , input   wire                      S3_BVALID
+     , output  wire                      S3_BREADY
+     
+
+
+     , output  wire   [WIDTH_SID-1:0]    S3_ARID
+     , output  wire   [WIDTH_AD-1:0]     S3_ARADDR
+     , output  wire   [ 3:0]             S3_ARLEN
+     , output  wire   [ 2:0]             S3_ARSIZE
+     , output  wire   [ 1:0]             S3_ARBURST
+     , output  wire                      S3_ARVALID
+     , input   wire                      S3_ARREADY
+     
+     , input   wire   [WIDTH_SID-1:0]    S3_RID
+     , input   wire   [WIDTH_DA-1:0]     S3_RDATA
+     , input   wire   [ 1:0]             S3_RRESP
+     , input   wire                      S3_RLAST
+     , input   wire                      S3_RVALID
+     , output  wire                      S3_RREADY
+
+
      //------------to M0
      , output   wire                     core_WAIT
 );
@@ -316,23 +355,43 @@ end
 reg S0_USE;
 reg S1_USE;
 reg S2_USE;
+reg S3_USE;
 
 reg r_S0_USE;
 reg r_S1_USE;
 reg r_S2_USE;
+reg r_S3_USE;
 
 
 always@(*) begin  
         
     if(M0_USE && (M0_ARVALID || M0_AWVALID)) begin
-        S0_USE = M0_ARADDR[WIDTH_AD-1:ADDR_LENGTH0] == ADDR_BASE0[WIDTH_AD-1:ADDR_LENGTH0];
-        S1_USE = M0_ARADDR[WIDTH_AD-1:ADDR_LENGTH1] == ADDR_BASE1[WIDTH_AD-1:ADDR_LENGTH1];
-        S2_USE = M0_ARADDR[WIDTH_AD-1:ADDR_LENGTH2] == ADDR_BASE2[WIDTH_AD-1:ADDR_LENGTH2];
+        if(M0_ARVALID)begin
+            S0_USE = M0_ARADDR[WIDTH_AD-1:ADDR_LENGTH0] == ADDR_BASE0[WIDTH_AD-1:ADDR_LENGTH0];
+            S1_USE = M0_ARADDR[WIDTH_AD-1:ADDR_LENGTH1] == ADDR_BASE1[WIDTH_AD-1:ADDR_LENGTH1];
+            S2_USE = M0_ARADDR[WIDTH_AD-1:ADDR_LENGTH2] == ADDR_BASE2[WIDTH_AD-1:ADDR_LENGTH2];
+            S3_USE = M0_ARADDR[WIDTH_AD-1:ADDR_LENGTH3] == ADDR_BASE3[WIDTH_AD-1:ADDR_LENGTH3];
+        end
+        else if(M0_AWVALID)begin
+            S0_USE = M0_AWADDR[WIDTH_AD-1:ADDR_LENGTH0] == ADDR_BASE0[WIDTH_AD-1:ADDR_LENGTH0];
+            S1_USE = M0_AWADDR[WIDTH_AD-1:ADDR_LENGTH1] == ADDR_BASE1[WIDTH_AD-1:ADDR_LENGTH1];
+            S2_USE = M0_AWADDR[WIDTH_AD-1:ADDR_LENGTH2] == ADDR_BASE2[WIDTH_AD-1:ADDR_LENGTH2];
+            S3_USE = M0_AWADDR[WIDTH_AD-1:ADDR_LENGTH3] == ADDR_BASE3[WIDTH_AD-1:ADDR_LENGTH3];
+        end
     end
     else if(M1_USE && (M1_ARVALID || M1_AWVALID) ) begin
-        S0_USE = M1_ARADDR[WIDTH_AD-1:ADDR_LENGTH0] == ADDR_BASE0[WIDTH_AD-1:ADDR_LENGTH0];
-        S1_USE = M1_ARADDR[WIDTH_AD-1:ADDR_LENGTH1] == ADDR_BASE1[WIDTH_AD-1:ADDR_LENGTH1];
-        S2_USE = M1_ARADDR[WIDTH_AD-1:ADDR_LENGTH2] == ADDR_BASE2[WIDTH_AD-1:ADDR_LENGTH2];
+        if(M1_ARVALID)begin
+            S0_USE = M1_ARADDR[WIDTH_AD-1:ADDR_LENGTH0] == ADDR_BASE0[WIDTH_AD-1:ADDR_LENGTH0];
+            S1_USE = M1_ARADDR[WIDTH_AD-1:ADDR_LENGTH1] == ADDR_BASE1[WIDTH_AD-1:ADDR_LENGTH1];
+            S2_USE = M1_ARADDR[WIDTH_AD-1:ADDR_LENGTH2] == ADDR_BASE2[WIDTH_AD-1:ADDR_LENGTH2];
+            S3_USE = M1_ARADDR[WIDTH_AD-1:ADDR_LENGTH3] == ADDR_BASE3[WIDTH_AD-1:ADDR_LENGTH3];
+        end
+        else if(M1_AWVALID)begin
+            S0_USE = M1_AWADDR[WIDTH_AD-1:ADDR_LENGTH0] == ADDR_BASE0[WIDTH_AD-1:ADDR_LENGTH0];
+            S1_USE = M1_AWADDR[WIDTH_AD-1:ADDR_LENGTH1] == ADDR_BASE1[WIDTH_AD-1:ADDR_LENGTH1];
+            S2_USE = M1_AWADDR[WIDTH_AD-1:ADDR_LENGTH2] == ADDR_BASE2[WIDTH_AD-1:ADDR_LENGTH2];
+            S3_USE = M1_AWADDR[WIDTH_AD-1:ADDR_LENGTH3] == ADDR_BASE3[WIDTH_AD-1:ADDR_LENGTH3];
+        end
     end
         
 end
@@ -343,15 +402,23 @@ always@(ACLK or ARESETn)begin
         r_S0_USE <= 1'b0;
         r_S1_USE <= 1'b0;
         r_S2_USE <= 1'b0;
+        r_S3_USE <= 1'b0;
     end
     else begin
-    
+        r_S0_USE <= 1'b0;
+        r_S1_USE <= 1'b0;
+        r_S2_USE <= 1'b0;
+        r_S3_USE <= 1'b0;
+
+
         if(S0_USE) 
             r_S0_USE <= 1'b1;
         else if(S1_USE) 
             r_S1_USE <= 1'b1;
         else if(S2_USE)
             r_S2_USE <= 1'b1;
+        else if(S3_USE)
+            r_S3_USE <= 1'b1;
         
     end
 end
@@ -370,17 +437,17 @@ assign AWLEN = (M0_USE || r_M0_USE) ? M0_AWLEN : (M1_USE || r_M1_USE) ? M1_AWLEN
 assign AWSIZE = (M0_USE || r_M0_USE) ? M0_AWSIZE : (M1_USE || r_M1_USE) ? M1_AWSIZE : 'd0;
 assign AWBURST = (M0_USE || r_M0_USE) ? M0_AWBURST : (M1_USE || r_M1_USE) ? M1_AWBURST : 'd0;
 assign AWVALID = (M0_USE || r_M0_USE) ? M0_AWVALID : (M1_USE || r_M1_USE) ? M1_AWVALID : 'd0;
-assign AWREADY = (S0_USE || r_S0_USE) ? S0_AWREADY : (S1_USE || r_S1_USE) ? S1_AWREADY : (S2_USE || r_S2_USE) ? S2_AWREADY : 'd0;
+assign AWREADY = (S0_USE || r_S0_USE) ? S0_AWREADY : (S1_USE || r_S1_USE) ? S1_AWREADY : (S2_USE || r_S2_USE) ? S2_AWREADY : (S3_USE || r_S3_USE) ? S3_AWREADY : 'd0;
 
 assign WDATA = (M0_USE || r_M0_USE) ? M0_WDATA : (M1_USE || r_M1_USE) ? M1_WDATA : 'd0;
 assign WSTRB = (M0_USE || r_M0_USE) ? M0_WSTRB : (M1_USE || r_M1_USE) ? M1_WSTRB : 'd0;
 assign WLAST = (M0_USE || r_M0_USE) ? M0_WLAST : (M1_USE || r_M1_USE) ? M1_WLAST : 'd0;
 assign WVALID = (M0_USE || r_M0_USE) ? M0_WVALID : (M1_USE || r_M1_USE) ? M1_WVALID : 'd0;
-assign WREADY = (S0_USE || r_S0_USE) ? S0_WREADY : (S1_USE || r_S1_USE) ? S1_WREADY : (S2_USE || r_S2_USE) ? S2_WREADY : 'd0;
+assign WREADY = (S0_USE || r_S0_USE) ? S0_WREADY : (S1_USE || r_S1_USE) ? S1_WREADY : (S2_USE || r_S2_USE) ? S2_WREADY : (S3_USE || r_S3_USE) ? S3_WREADY : 'd0;
 
-assign BID = (S0_USE || r_S0_USE) ? S0_BID : (S1_USE || r_S1_USE) ? S1_BID : (S2_USE || r_S2_USE) ? S2_BID : 'd0;
-assign BRESP = (S0_USE || r_S0_USE) ? S0_BRESP : (S1_USE || r_S1_USE) ? S1_BRESP : (S2_USE || r_S2_USE) ? S2_BRESP : 'd0;
-assign BVALID = (S0_USE || r_S0_USE) ? S0_BVALID : (S1_USE || r_S1_USE) ? S1_BVALID : (S2_USE || r_S2_USE) ? S2_BVALID : 'd0;
+assign BID = (S0_USE || r_S0_USE) ? S0_BID : (S1_USE || r_S1_USE) ? S1_BID : (S2_USE || r_S2_USE) ? S2_BID : (S3_USE || r_S3_USE) ? S3_BID : 'd0;
+assign BRESP = (S0_USE || r_S0_USE) ? S0_BRESP : (S1_USE || r_S1_USE) ? S1_BRESP : (S2_USE || r_S2_USE) ? S2_BRESP : (S3_USE || r_S3_USE) ? S3_BRESP : 'd0;
+assign BVALID = (S0_USE || r_S0_USE) ? S0_BVALID : (S1_USE || r_S1_USE) ? S1_BVALID : (S2_USE || r_S2_USE) ? S2_BVALID : (S3_USE || r_S3_USE) ? S3_BVALID : 'd0;
 assign BREADY = (M0_USE || r_M0_USE) ? M0_BREADY : (M1_USE || r_M1_USE) ? M1_BREADY : 'd0;
 
 assign ARID = (M0_USE || r_M0_USE) ? M0_ARID : (M1_USE || r_M1_USE) ? M1_ARID : 'd0;
@@ -389,13 +456,13 @@ assign ARLEN = (M0_USE || r_M0_USE) ? M0_ARLEN : (M1_USE || r_M1_USE) ? M1_ARLEN
 assign ARSIZE = (M0_USE || r_M0_USE) ? M0_ARSIZE : (M1_USE || r_M1_USE) ? M1_ARSIZE : 'd0;
 assign ARBURST = (M0_USE || r_M0_USE) ? M0_ARBURST : (M1_USE || r_M1_USE) ? M1_ARBURST : 'd0;
 assign ARVALID = (M0_USE || r_M0_USE) ? M0_ARVALID : (M1_USE || r_M1_USE) ? M1_ARVALID : 'd0;
-assign ARREADY = (S0_USE || r_S0_USE) ? S0_ARREADY : (S1_USE || r_S1_USE) ? S1_ARREADY : (S2_USE || r_S2_USE) ? S2_ARREADY : 'd0;
+assign ARREADY = (S0_USE || r_S0_USE) ? S0_ARREADY : (S1_USE || r_S1_USE) ? S1_ARREADY : (S2_USE || r_S2_USE) ? S2_ARREADY : (S3_USE || r_S3_USE) ? S3_ARREADY : 'd0;
 
 assign RID = (M0_USE || r_M0_USE) ? M0_RID : (M1_USE || r_M1_USE) ? M1_RID : 'd0;
-assign RDATA = (S0_USE || r_S0_USE) ? S0_RDATA : (S1_USE || r_S1_USE) ? S1_RDATA : (S2_USE || r_S2_USE) ? S2_RDATA : 'd0;
-assign RRESP = (S0_USE || r_S0_USE) ? S0_RRESP : (S1_USE || r_S1_USE) ? S1_RRESP : (S2_USE || r_S2_USE) ? S2_RRESP : 'd0;
-assign RLAST = (S0_USE || r_S0_USE) ? S0_RLAST : (S1_USE || r_S1_USE) ? S1_RLAST : (S2_USE || r_S2_USE) ? S2_RLAST : 'd0;
-assign RVALID = (S0_USE || r_S0_USE) ? S0_RVALID : (S1_USE || r_S1_USE) ? S1_RVALID : (S2_USE || r_S2_USE) ? S2_RVALID : 'd0;
+assign RDATA = (S0_USE || r_S0_USE) ? S0_RDATA : (S1_USE || r_S1_USE) ? S1_RDATA : (S2_USE || r_S2_USE) ? S2_RDATA : (S3_USE || r_S3_USE) ? S3_RDATA : 'd0;
+assign RRESP = (S0_USE || r_S0_USE) ? S0_RRESP : (S1_USE || r_S1_USE) ? S1_RRESP : (S2_USE || r_S2_USE) ? S2_RRESP : (S3_USE || r_S3_USE) ? S3_RRESP : 'd0;
+assign RLAST = (S0_USE || r_S0_USE) ? S0_RLAST : (S1_USE || r_S1_USE) ? S1_RLAST : (S2_USE || r_S2_USE) ? S2_RLAST : (S3_USE || r_S3_USE) ? S3_RLAST : 'd0;
+assign RVALID = (S0_USE || r_S0_USE) ? S0_RVALID : (S1_USE || r_S1_USE) ? S1_RVALID : (S2_USE || r_S2_USE) ? S2_RVALID : (S3_USE || r_S3_USE) ? S3_RVALID : 'd0;
 assign RREADY = (M0_USE || r_M0_USE) ? M0_RREADY : (M1_USE || r_M1_USE) ? M1_RREADY : 'd0;
 
 
@@ -482,6 +549,25 @@ assign S2_ARSIZE = (S2_USE || r_S2_USE) ? ARSIZE : 'd0;
 assign S2_ARBURST = (S2_USE || r_S2_USE) ? ARBURST : 'd0;
 assign S2_ARVALID = (S2_USE || r_S2_USE) ? ARVALID : 'd0;
 assign S2_RREADY = (S2_USE || r_S2_USE) ? RREADY : 'd0;
+
+assign S3_AWID = (S3_USE || r_S3_USE) ? {MID, AWID} : 'd0;
+assign S3_AWADDR = (S3_USE || r_S3_USE) ? AWADDR : 'd0;
+assign S3_AWLEN = (S3_USE || r_S3_USE) ? AWLEN : 'd0;
+assign S3_AWSIZE = (S3_USE || r_S3_USE) ? AWSIZE : 'd0;
+assign S3_AWBURST = (S3_USE || r_S3_USE) ? AWBURST : 'd0;
+assign S3_AWVALID = (S3_USE || r_S3_USE) ? AWVALID : 'd0;
+assign S3_WDATA = (S3_USE || r_S3_USE) ? WDATA : 'd0;
+assign S3_WSTRB = (S3_USE || r_S3_USE) ? WSTRB : 'd0;
+assign S3_WLAST = (S3_USE || r_S3_USE) ? WLAST : 'd0;
+assign S3_WVALID = (S3_USE || r_S3_USE) ? WVALID : 'd0;
+assign S3_BREADY = (S3_USE || r_S3_USE) ? BREADY : 'd0;
+assign S3_ARID = (S3_USE || r_S3_USE) ? {MID, ARID} : 'd0;
+assign S3_ARADDR = (S3_USE || r_S3_USE) ? ARADDR : 'd0;
+assign S3_ARLEN = (S3_USE || r_S3_USE) ? ARLEN : 'd0;
+assign S3_ARSIZE = (S3_USE || r_S3_USE) ? ARSIZE : 'd0;
+assign S3_ARBURST = (S3_USE || r_S3_USE) ? ARBURST : 'd0;
+assign S3_ARVALID = (S3_USE || r_S3_USE) ? ARVALID : 'd0;
+assign S3_RREADY = (S3_USE || r_S3_USE) ? RREADY : 'd0;
 
 
 

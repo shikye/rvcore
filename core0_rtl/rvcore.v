@@ -112,6 +112,8 @@ assign Rvcore_data_o = bc_data_o;
     wire            ex_branch_flag_o;
     wire     [31:0] ex_branch_pc_o;
 
+    wire            ex_req_bus_o;
+
     //ex_mem_reg
     wire     [31:0]  exmem_reg_wdata_o;
     wire     [4:0]   exmem_reg_waddr_o;
@@ -260,6 +262,10 @@ assign Rvcore_data_o = bc_data_o;
     wire    [31:0]                          bc_addr_o;
     wire    [127:0]                         bc_data_o;
     wire                                    core_WAIT_bus_o; 
+
+    wire                                    bc_bus_ready_o;
+    wire    [31:0]                          bc_bus_data_o;
+
 
 
     IF IF_ins(
@@ -443,7 +449,9 @@ assign Rvcore_data_o = bc_data_o;
         .ex_branch_flag_o(ex_branch_flag_o),
         .ex_branch_pc_o(ex_branch_pc_o),
 
-        .fc_stall_ex_i(fc_stall_ex_o)
+        .fc_stall_ex_i(fc_stall_ex_o),
+
+        .ex_req_bus_o(ex_req_bus_o)
 
     );
 
@@ -514,7 +522,11 @@ assign Rvcore_data_o = bc_data_o;
         .Dcache_data_i(Dcache_data_o),
 
         .fc_stall_mem_i(fc_stall_mem_o),
-        .fc_flush_mem_i(fc_flush_mem_o)
+        .fc_flush_mem_i(fc_flush_mem_o),
+
+        .bc_bus_ready_i(bc_bus_ready_o),
+        .bc_bus_data_i(bc_bus_data_o)
+
     );
 
     mem_wb_reg memwb_ins(
@@ -685,12 +697,14 @@ assign Rvcore_data_o = bc_data_o;
 
         .if_req_Icache_i(if_req_Icache_o),
         .ex_req_Dcache_i(ex_req_Dcache_o),
+        .ex_req_bus_i(ex_req_bus_o),
 
         .Icache_hit_i(Icache_hit_o),
         .Dcache_hit_i(Dcache_hit_o),
 
         .bc_Icache_ready_i(bc_Icache_ready_o),
         .bc_Dcache_ready_i(bc_Dcache_ready_o),
+        .bc_bus_ready_i(bc_bus_ready_o),
         .core_WAIT_i(core_WAIT_bus_o),
 
 
@@ -736,26 +750,44 @@ assign Rvcore_data_o = bc_data_o;
 
         .clk(clk),
         .rst_n(rst_n),
+
         .Icache_addr_i(Icache_addr_o),
         .Icache_valid_req_i(Icache_valid_req_o),
+
         .bc_Icache_ready_o(bc_Icache_ready_o),
         .bc_Icache_data_o(bc_Icache_data_o),
+
         .Dcache_rd_req_i(Dcache_rd_req_o),
         .Dcache_rd_addr_i(Dcache_rd_addr_o),
         .Dcache_wb_req_i(Dcache_wb_req_o),
         .Dcache_wb_addr_i(Dcache_wb_addr_o),
         .Dcache_wb_data_i(Dcache_wb_data_o),
+
+        .ex_req_bus_i(ex_req_bus_o),
+        .ex_mem_rw_i(ex_mem_rw_o),
+        .ex_mem_addr_i(ex_mem_addr_o),
+        .ex_mem_data_i(ex_mem_wr_data_o),
+
+        .bc_bus_ready_o(bc_bus_ready_o),
+        .bc_bus_data_o(bc_bus_data_o),
+
+
+
         .bc_Dcache_ready_o(bc_Dcache_ready_o),
         .bc_Dcache_data_o(bc_Dcache_data_o),
+
         .bc_valid_req_o(bc_valid_req_o),
         .bc_rw_o(bc_rw_o),
         .bc_addr_o(bc_addr_o),
         .bc_data_o(bc_data_o), 
+
         .axi_data_i(axi_data_i),  //to axi controller
         .axi_rd_over_i(axi_rd_over_i),
         .axi_wr_over_i(axi_wr_over_i),
+
         .core_WAIT_i(core_WAIT_i),
-        .core_WAIT_bus_o(core_WAIT_bus_o), //stall Icache,Dcache         
+        .core_WAIT_bus_o(core_WAIT_bus_o), //stall Icache,Dcache        
+
         .fc_jump_flag_Icache_i(fc_jump_flag_Icache_o)
     );
 

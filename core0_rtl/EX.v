@@ -53,7 +53,11 @@ module EX (
     output  wire            [31:0]  ex_branch_pc_o,
 
     //from fc
-    input   wire                    fc_stall_ex_i
+    input   wire                    fc_stall_ex_i,
+
+    //to fc and bus_controller
+    output  wire                    ex_req_bus_o   //由于一次访存指令只会是bus类型或者Dcache类型，所以让bus行为取代Dcache行为
+                                                   //外部直接视为是Dcache类型
 
 );
 
@@ -73,7 +77,28 @@ assign ex_mem_wrwidth_o = idex_mem_width_i;
 assign ex_mem_wr_data_o = idex_mem_wr_data_i;
 assign ex_mem_rdtype_o = idex_mem_rdtype_i;
 
-assign ex_req_Dcache_o = idex_mtype_i ? 1'b1 : 1'b0;
+
+//找上升沿  flag信号应该使用上升沿判断 牢记多个控制信号可能会导致混乱
+reg req_Dcache_buffer, req_bus_buffer;
+
+always@(posedge clk)begin
+    if(rst_n == 1'b0)begin
+        req_Dcache_buffer <= 1'b0;
+        req_bus_buffer <= 1'b0;
+    end
+    else begin
+        req_Dcache_buffer <= req_Dcache;
+        req_bus_buffer <= req_bus;
+    end
+
+end
+
+
+assign req_Dcache = (idex_mtype_i && (ex_mem_addr_o < 32'h2000_0000) )? 1'b1 : 1'b0;
+assign req_bus = (idex_mtype_i && (ex_mem_addr_o >= 32'h2000_0000) )? 1'b1 : 1'b0;
+
+assign ex_req_Dcache_o = (idex_mtype_i && (ex_mem_addr_o < 32'h2000_0000) )? 1'b1 : 1'b0;
+assign ex_req_bus_o = ~req_bus_buffer && req_bus;
 
 
 
