@@ -36,6 +36,9 @@ module Flow_Ctrl(                  //Flush, Stall, Jump
     input   wire                    bc_bus_ready_i,
     input   wire                    core_WAIT_i,
 
+    //from clint
+    input   wire                    cl_stall_i,
+
     
 
 //-------Flush: Jal,Jalr,Btype ------- to if_id_reg, id_ex_reg, 
@@ -146,6 +149,19 @@ always@(*)begin
         fc_stall_exmem_o = 1'b1;
         fc_stall_memwb_o = 1'b1;
     
+    end
+
+    if(cl_stall_i)begin
+        fc_stall_if_o = 1'b1;
+        fc_stall_id_o = 1'b1;
+        fc_stall_ex_o = 1'b1;
+        fc_stall_mem_o = 1'b1;
+        fc_stall_wb_o = 1'b1;
+
+        fc_stall_ifid_o = 1'b1;
+        fc_stall_idex_o = 1'b1;
+        fc_stall_exmem_o = 1'b1;
+        fc_stall_memwb_o = 1'b1;
     end
 
 

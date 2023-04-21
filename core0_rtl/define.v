@@ -120,3 +120,10 @@
 `define MSCRATCH 12'h340
 `define MEPC    12'h341
 `define MCAUSE   12'h342
+
+//INT_INSTS
+
+`define INST_ECALL 32'h0000_0073
+`define INST_EBREAK 32'h0010_0073
+
+`define INST_MRET 32'h3020_0073

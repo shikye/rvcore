@@ -73,8 +73,17 @@ module ID (
     //to id_ex_reg
     output  wire                    id_csr_we_o,
     output  wire            [11:0]  id_csr_waddr_o,
-    output  wire            [31:0]  id_csr_rdata_o
+    output  wire            [31:0]  id_csr_rdata_o,
+
+
+    //to clint
+    output  wire            [31:0]  id_inst_o,
+    output  wire            [31:0]  id_pc_o
 );
+
+assign id_inst_o = inst;
+assign id_pc_o = ifid_pc_i;
+
 
     wire [31:0] inst;
 
@@ -241,7 +250,21 @@ module ID (
     end
 
 //-----------------------------------------
-    assign inst = load_use_flag ? 32'd0 : recover_flag ? recover_inst :  flush_flag ? 32'h0 :(fc_stall_id_i == 1'b1) ? 32'h0 : Icache_ready_i ? Icache_inst_i : Icache_in_Buffer ? Buffer_to_id :  32'h0;  //顺序重要
+    assign inst = load_use_flag ? 32'd0 : recover_flag ? recover_inst :  flush_flag ? 32'h0 :  Icache_ready_i ? Icache_inst_i : int_type ? 32'd0 : Icache_in_Buffer ? Buffer_to_id :  32'h0;  //顺序重要
+
+
+    reg int_type;
+    always @(posedge clk) begin
+        if(rst_n == 1'b0)
+            int_type <= 1'b0;
+        else begin
+            if(inst == `INST_EBREAK || inst == `INST_ECALL || inst == `INST_MRET)
+                int_type <= 1'b1;
+            else if(inst != 32'd0)
+                int_type <= 1'b0;
+        end
+        
+    end
 
 
 
@@ -304,12 +327,12 @@ module ID (
 
 
 //----------eximm
-wire [31:0] id_inst_o = inst;
+wire [31:0] inst_o = inst;
 wire [31:0] eximm_eximm_o;
 
 
 eximm eximm_ins(
-    .id_inst_i(id_inst_o),
+    .id_inst_i(inst_o),
     .eximm_eximm_o(eximm_eximm_o)
 );
     

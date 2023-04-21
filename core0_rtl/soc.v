@@ -175,6 +175,8 @@ module soc(
     wire [1 : 0]                            timer_AXI_RRESP;     
     wire                                    timer_AXI_RLAST;     
     wire                                    timer_AXI_RVALID;  
+
+    wire                                    timer_int_o;
     
     //uart
     wire                                    uart_AXI_AWREADY;   
@@ -206,7 +208,9 @@ module soc(
         .Rvcore_valid_req_o(Rvcore_valid_req_o),
         .Rvcore_rw_o(Rvcore_rw_o),
         .Rvcore_addr_o(Rvcore_addr_o),
-        .Rvcore_data_o(Rvcore_data_o)
+        .Rvcore_data_o(Rvcore_data_o),
+
+        .timer_int_i(timer_int_o)
     );
 
     
@@ -550,7 +554,9 @@ timer timer_ins(
     .S_AXI_RRESP(timer_AXI_RRESP)     ,
     .S_AXI_RLAST(timer_AXI_RLAST)     ,
     .S_AXI_RVALID(timer_AXI_RVALID)    ,
-    .S_AXI_RREADY(S2_RREADY) 
+    .S_AXI_RREADY(S2_RREADY) ,
+
+    .timer_int_o(timer_int_o)
 
 );
 

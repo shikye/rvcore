@@ -49,7 +49,7 @@ module timer#                 //timer的访问不能经过Cache
 
 
 
-        output  wire                                interupt_o
+        output  wire                                timer_int_o
 );
 
 
@@ -65,7 +65,7 @@ module timer#                 //timer的访问不能经过Cache
 
     //[0]:count enable
     //[1]:interupt enable
-    //[2]:trigger  写清零
+    //[2]:trigger  写清零--由中断处理函数完成
     reg[31:0] timer_state;                 //0x00
 
     reg[31:0] timer_count;                 //0x04     ro
@@ -73,7 +73,7 @@ module timer#                 //timer的访问不能经过Cache
     reg[31:0] timer_value;                 //0x08
 
 
-    assign interupt_o = (timer_state[1] && timer_state[2]) ? 1'd1 : 1'd0;
+    assign timer_int_o = (timer_state[1] && timer_state[2]) ? 1'd1 : 1'd0;
 
 
 
@@ -137,10 +137,11 @@ module timer#                 //timer的访问不能经过Cache
             if(timer_state[0])begin
 
 
-                if(timer_count <= timer_value)
+                if(timer_count < timer_value && timer_state[2] == 1'b0)
                     timer_count <= timer_count + 32'd1;
-                else 
+                else begin
                     timer_count <= 32'd0;
+                end
                     
             
             end
@@ -173,6 +174,10 @@ always @(posedge S_AXI_ACLK) begin
     end
 
     else begin
+        if(timer_count == timer_value)
+
+
+
       case(W_state)
         W_Idle:begin
   

@@ -134,14 +134,17 @@ always @(posedge clk or negedge rst_n) begin
                 if(fc_jump_flag_Icache_i == 1'b1) begin  //btype or jtype  --to Idle state, wait the new pc
 
                     cur_state <= Idle_or_Compare_Tag;
+                    Icache_ready_o <= 1'b0;
                 
                 end 
                 else begin
                     if(fc_stall_Icache_i == 1'b1)begin
                         req_again <= 1'b1;
+                        Icache_ready_o <= 1'b0;
                     end
 
                     else if(if_req_Icache_i == 1'b1 || req_again == 1'b1)begin
+                        req_again <= 1'b0;
 
                         if(Icache_hit_o == 1'b1)begin   //read hit then change Replace
 

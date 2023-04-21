@@ -12,7 +12,10 @@ module rvcore(
     output  wire                     Rvcore_valid_req_o,
     output  wire                     Rvcore_rw_o,
     output  wire             [31:0]  Rvcore_addr_o,
-    output  wire             [127:0] Rvcore_data_o
+    output  wire             [127:0] Rvcore_data_o,
+
+    //from timer
+    input   wire                    timer_int_i
 );
 
 
@@ -67,6 +70,9 @@ assign Rvcore_data_o = bc_data_o;
     wire            id_csr_we_o;
     wire    [11:0]  id_csr_waddr_o;
     wire    [31:0]  id_csr_rdata_o;
+
+    wire    [31:0]  id_inst_o;
+    wire    [31:0]  id_pc_o;
     
 
     //id_ex_reg
@@ -221,6 +227,9 @@ assign Rvcore_data_o = bc_data_o;
 
     //csr_regs
     wire        [31:0]  csr_regs_rdata_o;
+    wire        [31:0]  mstatus_o;
+    wire        [31:0]  mtvec_o;
+    wire        [31:0]  mepc_o;
 
     //axi_m_interface
     wire        [127:0] axi_data_o;
@@ -266,7 +275,13 @@ assign Rvcore_data_o = bc_data_o;
     wire                                    bc_bus_ready_o;
     wire    [31:0]                          bc_bus_data_o;
 
-
+    //clint
+    wire    [11:0]                                cl_csr_waddr_o;
+    wire    [31:0]                              cl_csr_wdata_o;
+    wire                                    cl_csr_we_o;
+    wire                                    cl_int_o;
+    wire    [31:0]                                cl_addr_o;
+    wire                                    cl_stall_o;
 
     IF IF_ins(
         .clk(clk),
@@ -276,6 +291,9 @@ assign Rvcore_data_o = bc_data_o;
 
         .fc_jump_pc_if_i(fc_jump_pc_if_o),
         .fc_jump_flag_if_i(fc_jump_flag_if_o),
+
+        .cl_int_i(cl_int_o),
+        .cl_addr_i(cl_addr_o),
 
         .if_pc_o(if_pc_o),
 
@@ -353,7 +371,10 @@ assign Rvcore_data_o = bc_data_o;
 
         .id_csr_we_o(id_csr_we_o),
         .id_csr_waddr_o(id_csr_waddr_o),
-        .id_csr_rdata_o(id_csr_rdata_o)
+        .id_csr_rdata_o(id_csr_rdata_o),
+
+        .id_inst_o(id_inst_o),
+        .id_pc_o(id_pc_o)
     );
 
 
@@ -707,6 +728,8 @@ assign Rvcore_data_o = bc_data_o;
         .bc_bus_ready_i(bc_bus_ready_o),
         .core_WAIT_i(core_WAIT_bus_o),
 
+        .cl_stall_i(cl_stall_o),
+
 
         .fc_flush_ifid_o(fc_flush_ifid_o),
         .fc_flush_idex_o(fc_flush_idex_o),
@@ -738,8 +761,18 @@ assign Rvcore_data_o = bc_data_o;
         csr_regs csr_regs_ins(
             .clk(clk),
             .rst_n(rst_n),
+
             .id_csr_raddr_i(id_csr_raddr_o),
             .csr_regs_rdata_o(csr_regs_rdata_o),
+
+            .cl_csr_waddr_i(cl_csr_waddr_o),
+            .cl_csr_wdata_i(cl_csr_wdata_o),
+            .cl_csr_we_i(cl_csr_we_o),  
+
+            .mstatus_o(mstatus_o),
+            .mtvec_o(mtvec_o),
+            .mepc_o(mepc_o),
+
             .wb_csr_wdata_i(wb_csr_wdata_o),
             .wb_csr_waddr_i(wb_csr_waddr_o),
             .wb_csr_we_i(wb_csr_we_o)
@@ -790,6 +823,27 @@ assign Rvcore_data_o = bc_data_o;
 
         .fc_jump_flag_Icache_i(fc_jump_flag_Icache_o)
     );
+
+    clint cl_ins(
+    .clk(clk),
+    .rst_n(rst_n),
+    .timer_int_i(timer_int_i),
+    .id_inst_i(id_inst_o),
+    .id_pc_i(id_pc_o),
+    .id_jump_flag_i(id_jump_flag_o),
+    .id_jump_pc_i(id_jump_pc_o),
+    .ex_branch_flag_i(ex_branch_flag_o),
+    .ex_branch_pc_i(ex_branch_pc_o),
+    .mstatus_i(mstatus_o),
+    .mtvec_i(mtvec_o),
+    .mepc_i(mepc_o),
+    .cl_csr_waddr_o(cl_csr_waddr_o),
+    .cl_csr_wdata_o(cl_csr_wdata_o),
+    .cl_csr_we_o(cl_csr_we_o),
+    .cl_int_o(cl_int_o),
+    .cl_addr_o(cl_addr_o),
+    .cl_stall_o(cl_stall_o)
+);
 
 
 

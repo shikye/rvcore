@@ -7,6 +7,11 @@ module IF(
 
     input   wire                fc_jump_flag_if_i, //跳转
     input   wire        [31:0]  fc_jump_pc_if_i,
+    
+    //from clint
+    input   wire                cl_int_i,
+    input   wire        [31:0]  cl_addr_i,
+    
     //to Icache, if_id_reg
     output  reg         [31:0]  if_pc_o,
 
@@ -27,6 +32,11 @@ always@(posedge clk or negedge rst_n)begin
         else if(start_flag == 1'b1)begin
             if_pc_o <= 32'h0;
             if_req_Icache_o <= 1'b1;
+            start_flag <= 1'b0;
+        end
+        else if(cl_int_i == 1'b1)begin
+            if_pc_o <= cl_addr_i;
+            if_req_Icache_o <= 1'b0;
             start_flag <= 1'b0;
         end
         else if(fc_jump_flag_if_i == 1'b1)begin  //priority of jump is higher than stall
