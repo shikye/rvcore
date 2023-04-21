@@ -3,8 +3,6 @@
 //level   0     x    1
 //data低位优先
 
-//Data在一个cycle_cnt的中间位置改变
-
 module uart#                 //外设的访问不经过Cache   只提供写功能
 	(
 		parameter                                   WIDTH_ID	    = 2,
@@ -156,7 +154,7 @@ always @(posedge S_AXI_ACLK) begin
       r_s_axi_bvalid <= 1'b0;
 
       uart_tx <= 32'd0;
-      uart_baud <= 32'd0;
+      uart_baud <= BAUD_115200;
 
       tx_valid_req <= 1'b0;
     end
@@ -283,7 +281,7 @@ reg [3:0]                  bit_cnt;
 
 
 always@(posedge S_AXI_ACLK)begin
-    if(S_AXI_ARESETN)begin
+    if(S_AXI_ARESETN == 1'b0)begin
         uart_state <= 32'd0;
 
         TX_state <= TX_Idle;
@@ -308,33 +306,35 @@ always@(posedge S_AXI_ACLK)begin
 
             if(cycle_cnt == uart_baud[15:0])begin
                 cycle_cnt <= 16'd0;
-            end
-
-            case(TX_state)
-                TX_Start:begin
-                    tx_reg <= uart_tx[bit_cnt];
-                    bit_cnt <= bit_cnt + 4'd1;
-                    TX_state <= TX_Send;
-                end
-                TX_Send:begin
-                    bit_cnt <= bit_cnt + 4'd1;
-                    if(bit_cnt == 4'd8)begin
-                        TX_state <= TX_Stop;
-                        tx_reg <= 1'b1; //停止位
-                    end
-                    else 
-                        tx_reg <= uart_tx[bit_cnt];
-                end
-                TX_Stop:begin
-                    TX_state <= TX_Idle;
-
-                    uart_state[0] <= 1'b0;
-                
-                end
             
-        
-                default:;
-            endcase
+
+                case(TX_state)
+                    TX_Start:begin
+                        tx_reg <= uart_tx[bit_cnt];
+                        bit_cnt <= bit_cnt + 4'd1;
+                        TX_state <= TX_Send;
+                    end
+                    TX_Send:begin
+                        bit_cnt <= bit_cnt + 4'd1;
+                        if(bit_cnt == 4'd8)begin
+                            TX_state <= TX_Stop;
+                            tx_reg <= 1'b1; //停止位
+                        end
+                        else 
+                            tx_reg <= uart_tx[bit_cnt];
+                    end
+                    TX_Stop:begin
+                        TX_state <= TX_Idle;
+
+                        uart_state[0] <= 1'b0;
+                    
+                    end
+                
+            
+                    default:;
+                endcase
+            
+            end
         
         
         end

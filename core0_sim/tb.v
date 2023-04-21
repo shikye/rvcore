@@ -14,10 +14,10 @@ module tb;
     end
 
     initial begin
-        // $readmemh("./inst1",tb.soc_ins.rom.r_ram);
-        // $readmemh("./inst2",tb.soc_ins.rom.r_ram,4096);
-        // $readmemh("./inst3",tb.soc_ins.rom.r_ram,4160);
-        $readmemh("./inst",tb.soc_ins.rom.r_ram);
+        $readmemh("./inst1",tb.soc_ins.rom.r_ram);
+        $readmemh("./inst2",tb.soc_ins.rom.r_ram,4096);
+        $readmemh("./inst3",tb.soc_ins.rom.r_ram,4160);
+        // $readmemh("./inst",tb.soc_ins.rom.r_ram);
     end
 
 

@@ -189,7 +189,7 @@ always @(posedge S_AXI_ACLK) begin
   
         W_Trans:begin
 
-            if(S_AXI_WVALID &&S_AXI_WREADY)
+            if(S_AXI_WVALID &&S_AXI_WREADY) begin
 
             case(r_s_axi_awaddr[3:0])
                 REG_STATE:begin
@@ -205,6 +205,8 @@ always @(posedge S_AXI_ACLK) begin
             
                 r_s_axi_bvalid <= 1'b1;
                 W_state <= W_Wait;  
+
+            end
         end
   
         W_Wait:begin
