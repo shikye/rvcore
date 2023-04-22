@@ -21,6 +21,7 @@ module IF(
 
 
 reg start_flag; //need a start state
+reg int;
 
 always@(posedge clk or negedge rst_n)begin
 
@@ -28,6 +29,7 @@ always@(posedge clk or negedge rst_n)begin
             if_pc_o <= 32'h0;
             if_req_Icache_o <= 1'b0;
             start_flag <= 1'b1;
+            int <= 1'b0;
         end
         else if(start_flag == 1'b1)begin
             if_pc_o <= 32'h0;
@@ -35,6 +37,7 @@ always@(posedge clk or negedge rst_n)begin
             start_flag <= 1'b0;
         end
         else if(cl_int_i == 1'b1)begin
+            int <= 1'b1;
             if_pc_o <= cl_addr_i;
             if_req_Icache_o <= 1'b0;
             start_flag <= 1'b0;
@@ -52,7 +55,11 @@ always@(posedge clk or negedge rst_n)begin
         end
         
         else begin
-            if_pc_o <= if_pc_o + 32'd4;
+            int <= 1'b0;
+            if(int)
+                if_pc_o <= if_pc_o;
+            else 
+                if_pc_o <= if_pc_o + 32'd4;
             if_req_Icache_o <= 1'b1;
             start_flag <= 1'b0;
         end

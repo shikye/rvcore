@@ -16,6 +16,9 @@ module MEM (
     input   wire            [31:0]  exmem_mem_addr_i,
     input   wire                    exmem_mem_rdtype_i,
 
+
+    input   wire                    exmem_ins_flag,
+
     //to mem_wb_reg
     output  reg             [31:0]  mem_reg_wdata_o,
     output  wire            [4:0]   mem_reg_waddr_o,
@@ -24,6 +27,8 @@ module MEM (
     output  wire            [31:0]  mem_csr_wdata_o,
     output  wire            [11:0]  mem_csr_waddr_o,
     output  wire                    mem_csr_we_o,
+
+    output  wire                    mem_ins_flag,
 
     //from Dcache
     input   wire                    Dcache_ready_i,
@@ -39,6 +44,8 @@ module MEM (
     
 
 );
+
+    assign mem_ins_flag = exmem_ins_flag;
 
     assign mem_csr_wdata_o = exmem_csr_wdata_i;
     assign mem_csr_waddr_o = exmem_csr_waddr_i;

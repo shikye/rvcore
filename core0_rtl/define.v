@@ -18,14 +18,20 @@
 
 `define Notype  7'b0000_000
 
+
 //-------------------------------------------------
 
 //ALUctrl operations
 `define ADD     5'd0
 `define SUB     5'd1
 `define MUL     5'd2
+`define MULH    5'd18
+`define MULHSU  5'd19
+`define MULHU   5'd20
 `define DIV     5'd3
+`define DIVU    5'd21
 `define REM     5'd4
+`define REMU    5'd22
 `define EQU     5'd5
 `define NEQ     5'd6
 `define SLT     5'd7 //Set Less Than
@@ -111,6 +117,23 @@
 `define R_SRL    7'b0000000
 `define R_SRA    7'b0100000
 
+
+
+//RV32M/Rtype - ALU_operation according to func3 
+`define R_Mfunc7 7'b000_0001
+
+//----according to 
+`define R_M_MUL 3'b000
+`define R_M_MULH 3'b001
+`define R_M_MULHSU 3'b010
+`define R_M_MULHU 3'b011
+`define R_M_DIV 3'b100
+`define R_M_DIVU 3'b101
+`define R_M_REM 3'b110
+`define R_M_REMU 3'b111
+
+
+
 //-------------------CSR_REGS----------------
 `define MCYCLE   12'hc00
 `define MCYCLEH  12'hc80
@@ -127,3 +150,5 @@
 `define INST_EBREAK 32'h0010_0073
 
 `define INST_MRET 32'h3020_0073
+
+

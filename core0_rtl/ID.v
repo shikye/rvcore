@@ -75,11 +75,20 @@ module ID (
     output  wire            [11:0]  id_csr_waddr_o,
     output  wire            [31:0]  id_csr_rdata_o,
 
+    
+    //from clint
+    input   wire                    cl_stall_i,
 
     //to clint
     output  wire            [31:0]  id_inst_o,
-    output  wire            [31:0]  id_pc_o
+    output  wire            [31:0]  id_pc_o,
+
+    output  wire                    id_ins_flag //用于判断流水线寄存器中是否存在指令， idex、exmem、memwb
+
+    
 );
+
+assign id_ins_flag = (inst != 32'd0) && (inst != 32'h0000_0013);
 
 assign id_inst_o = inst;
 assign id_pc_o = ifid_pc_i;
@@ -250,7 +259,7 @@ assign id_pc_o = ifid_pc_i;
     end
 
 //-----------------------------------------
-    assign inst = load_use_flag ? 32'd0 : recover_flag ? recover_inst :  flush_flag ? 32'h0 :  Icache_ready_i ? Icache_inst_i : int_type ? 32'd0 : Icache_in_Buffer ? Buffer_to_id :  32'h0;  //顺序重要
+    assign inst = load_use_flag ? 32'd0 : recover_flag ? recover_inst :  flush_flag | cl_stall_buffer ? 32'h0 :  Icache_ready_i ? Icache_inst_i : int_type ? 32'd0 : Icache_in_Buffer ? Buffer_to_id :  32'h0;  //顺序重要
 
 
     reg int_type;
@@ -262,6 +271,16 @@ assign id_pc_o = ifid_pc_i;
                 int_type <= 1'b1;
             else if(inst != 32'd0)
                 int_type <= 1'b0;
+        end
+        
+    end
+
+    reg cl_stall_buffer;
+    always @(posedge clk) begin
+        if(rst_n == 1'b0)
+            cl_stall_buffer <= 1'b0;
+        else begin
+            cl_stall_buffer <= cl_stall_i;
         end
         
     end

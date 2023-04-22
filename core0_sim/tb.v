@@ -16,7 +16,13 @@ module tb;
     initial begin
         // $readmemh("./inst1",tb.soc_ins.rom.r_ram);
         // $readmemh("./inst2",tb.soc_ins.rom.r_ram,4096);
+        // $readmemh("./inst3",tb.soc_ins.ram.r_ram,0);
+
+
+        // $readmemh("./inst1",tb.soc_ins.rom.r_ram);
+        // $readmemh("./inst2",tb.soc_ins.rom.r_ram,4096);
         // $readmemh("./inst3",tb.soc_ins.rom.r_ram,4160);
+        
         $readmemh("./inst",tb.soc_ins.rom.r_ram);
     end
 
@@ -58,7 +64,7 @@ module tb;
         $display("t4 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[29]);
         $display("t5 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[30]);
         $display("gp = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[3]);
-        // $display("t1 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[6]);
+        $display("t1 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[6]);
         // $display("t2 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[7]);
         // $display("t3 = 0x%x",tb.soc_ins.rvcore_ins.regs_ins.regs[28]);
         // $display("--------------------------------------------------");

@@ -8,7 +8,7 @@ def test_one_inst():
     os.popen(cmd_rm)
 
     tb_inst = sys.argv[1].split('/')[-1].split('.')[0]
-    cmd_cp_dump = 'cp'+' '+ '../verilog_mem/' + tb_inst + '.dump' + ' ' + tb_inst + '.dump'
+    cmd_cp_dump = 'cp'+' '+ '../verilog_mem_m/' + tb_inst + '.dump' + ' ' + tb_inst + '.dump'
     os.popen(cmd_cp_dump)
 
 

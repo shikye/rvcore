@@ -126,33 +126,60 @@ wire [6:0]  func7   = id_func7_i;
             end
 
             `Rtype:begin
-                case(func3)
-                    `R_ADD_SUB: begin
-                        case(func7)
-                            `R_ADD:  cu_ALUctrl_o = `ADD;
-                            `R_SUB:  cu_ALUctrl_o = `SUB;
-                            default:cu_ALUctrl_o = `NO_OP;
-                        endcase
-                    end
 
-                    `R_SLL:      cu_ALUctrl_o = `SLL;
-                    `R_SLT:     cu_ALUctrl_o = `SLT;
-                    `R_SLTU:      cu_ALUctrl_o = `SLTU;
-                    `R_XOR:       cu_ALUctrl_o = `XOR;
-                    `R_SRL_SRA: begin
-                        case(func7)
-                            `R_SRL:  cu_ALUctrl_o = `SRL;
-                            `R_SRA:  cu_ALUctrl_o = `SRA;
-                            default:cu_ALUctrl_o = `NO_OP;
-                        endcase
-                    end
-
-                    `R_OR:        cu_ALUctrl_o = `OR;
-                    `R_AND:       cu_ALUctrl_o = `AND;
-                    default:    cu_ALUctrl_o = `NO_OP;
-                endcase
+                
 
                 cu_reg_we_o = 1'b1;
+
+
+                if(func7 == 7'b000_0001)begin
+                    case(func3)
+
+                        `R_M_MUL: cu_ALUctrl_o =  `MUL;
+                        `R_M_MULH: cu_ALUctrl_o =  `MULH;
+                        `R_M_MULHSU: cu_ALUctrl_o =  `MULHSU;
+                        `R_M_MULHU: cu_ALUctrl_o =  `MULHU;
+                        `R_M_DIV: cu_ALUctrl_o =  `DIV;
+                        `R_M_DIVU: cu_ALUctrl_o =  `DIVU;
+                        `R_M_REM: cu_ALUctrl_o =  `REM;
+                        `R_M_REMU: cu_ALUctrl_o =  `REMU;
+                        default:    cu_ALUctrl_o = `NO_OP;
+
+                    endcase
+
+                end
+                else begin
+
+                    case(func3)
+                        `R_ADD_SUB: begin
+                            case(func7)
+                                `R_ADD:  cu_ALUctrl_o = `ADD;
+                                `R_SUB:  cu_ALUctrl_o = `SUB;
+                                default:cu_ALUctrl_o = `NO_OP;
+                            endcase
+                        end
+
+                        `R_SLL:      cu_ALUctrl_o = `SLL;
+                        `R_SLT:     cu_ALUctrl_o = `SLT;
+                        `R_SLTU:      cu_ALUctrl_o = `SLTU;
+                        `R_XOR:       cu_ALUctrl_o = `XOR;
+                        `R_SRL_SRA: begin
+                            case(func7)
+                                `R_SRL:  cu_ALUctrl_o = `SRL;
+                                `R_SRA:  cu_ALUctrl_o = `SRA;
+                                default:cu_ALUctrl_o = `NO_OP;
+                            endcase
+                        end
+
+                        `R_OR:        cu_ALUctrl_o = `OR;
+                        `R_AND:       cu_ALUctrl_o = `AND;
+                        default:    cu_ALUctrl_o = `NO_OP;
+                    endcase
+                
+                end
+
+
+
             end
 
         default:begin

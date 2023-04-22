@@ -10,6 +10,8 @@ module mem_wb_reg (
     input   wire            [11:0]  mem_csr_waddr_i,
     input   wire                    mem_csr_we_i,
 
+
+    input   wire                    mem_ins_flag,
     //to wb
     output  reg             [31:0]  memwb_reg_wdata_o,
     output  reg             [4:0]   memwb_reg_waddr_o,
@@ -18,6 +20,8 @@ module mem_wb_reg (
     output  reg             [31:0]  memwb_csr_wdata_o,
     output  reg             [11:0]  memwb_csr_waddr_o,
     output  reg                     memwb_csr_we_o,
+
+    output  reg                     memwb_ins_flag,
 
     //from fc
     input   wire                    fc_flush_memwb_i,
@@ -37,6 +41,8 @@ module mem_wb_reg (
             memwb_csr_waddr_o <= 12'h0;
             memwb_csr_we_o <= 1'b0;
 
+            memwb_ins_flag <= 1'b0;
+
         end
         else if(fc_stall_memwb_i == 1'b1)begin
             memwb_reg_wdata_o <= memwb_reg_wdata_o;
@@ -46,6 +52,8 @@ module mem_wb_reg (
             memwb_csr_wdata_o <= memwb_csr_wdata_o;
             memwb_csr_waddr_o <= memwb_csr_waddr_o;
             memwb_csr_we_o <= memwb_csr_we_o;
+
+            memwb_ins_flag <= memwb_ins_flag;
         end
         else if(fc_flush_memwb_i == 1'b1)begin
             memwb_reg_wdata_o <= 32'h0;
@@ -55,6 +63,8 @@ module mem_wb_reg (
             memwb_csr_wdata_o <= 32'h0;
             memwb_csr_waddr_o <= 12'h0;
             memwb_csr_we_o <= 1'b0;
+
+            memwb_ins_flag <= 1'b0;
         end
         else begin
             memwb_reg_wdata_o <= mem_reg_wdata_i;
@@ -64,6 +74,9 @@ module mem_wb_reg (
             memwb_csr_wdata_o <= mem_csr_wdata_i;
             memwb_csr_waddr_o <= mem_csr_waddr_i;
             memwb_csr_we_o <= mem_csr_we_i;
+
+
+            memwb_ins_flag <= mem_ins_flag;
         end
     end
     

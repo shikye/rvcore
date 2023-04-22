@@ -31,6 +31,8 @@ module clint(
     output  reg                     cl_int_o,
     output  reg             [31:0]  cl_addr_o,
 
+    //from fc
+    input   wire                    inst_forward_over,
     //to fc
     output  wire                    cl_stall_o
 );
@@ -50,10 +52,11 @@ module clint(
     localparam S_CSR_MCAUSE = 2;
     localparam S_CSR_MSTATUS = 3;
     localparam S_CSR_MRET = 4;
+    localparam S_CSR_WAIT = 5;
 
 
 
-
+    reg [1:0] int_type; //1-SYN,2-ASYN,3-MRET
 
 
     always@(*)begin      //需要立即给出中断信号，故不使用时序逻辑
@@ -68,6 +71,25 @@ module clint(
                 Int_state = S_INT_RET;
             else 
                 Int_state = S_INT_IDLE;
+        end
+    end
+
+    always@(posedge clk)begin
+        if(rst_n == 1'b0)
+            int_type <= 2'd0;
+        else begin
+            if(inst_forward_over == 1'b0)begin
+                if(Int_state == S_INT_SYN)
+                    int_type <= 2'd1;
+                else if(Int_state == S_INT_ASYN)
+                    int_type <= 2'd2;
+                else if(Int_state == S_INT_RET)
+                    int_type <= 2'd3;
+                else 
+                    int_type <= 2'd0;
+            end
+            else 
+                int_type <= 2'd0;
         end
     end
 
@@ -90,9 +112,9 @@ module clint(
                         Csr_state <= S_CSR_MEPC;
 
                         if(id_jump_flag_i)
-                            int_addr <= id_jump_pc_i - 32'h4;
+                            int_addr <= id_jump_pc_i;
                         else if(ex_branch_flag_i)
-                            int_addr <= ex_branch_pc_i - 32'h4;      //if会给出addr+4
+                            int_addr <= ex_branch_pc_i;    
                         else 
                             int_addr <= id_inst_i;
 
@@ -101,7 +123,7 @@ module clint(
                         Csr_state <= S_CSR_MEPC;
 
                         if(ex_branch_flag_i) //同步中断，id中不会是jump指令
-                            int_addr <= ex_branch_pc_i - 32'h4;
+                            int_addr <= ex_branch_pc_i;
                         else 
                             int_addr <= id_inst_i;
                         
@@ -122,9 +144,26 @@ module clint(
 
                 S_CSR_MCAUSE: Csr_state <= S_CSR_MSTATUS;
 
-                S_CSR_MSTATUS: Csr_state <= S_CSR_IDLE;
+                S_CSR_MSTATUS:begin
+                    if(inst_forward_over == 1'b1)
+                        Csr_state <= S_CSR_IDLE;
+                    else 
+                        Csr_state <= S_CSR_WAIT;
+                end
         
-                S_CSR_MRET: Csr_state <= S_CSR_IDLE;
+                S_CSR_MRET:begin
+                    if(inst_forward_over == 1'b1)
+                        Csr_state <= S_CSR_IDLE;
+                    else 
+                        Csr_state <= S_CSR_WAIT;
+                end
+
+                S_CSR_WAIT:begin
+                    if(inst_forward_over == 1'b1)
+                        Csr_state <= S_CSR_IDLE;
+                    else 
+                        Csr_state <= S_CSR_WAIT;
+                end
 
                 default:Csr_state <= S_CSR_IDLE;
         
@@ -163,6 +202,12 @@ module clint(
                     cl_csr_wdata_o <= {mstatus_i[31:4],mstatus_i[7],mstatus_i[2:0]};  //从MPIE恢复
                     cl_csr_we_o <= 1'b1;
                 end
+                S_CSR_WAIT:begin
+                    cl_csr_waddr_o <= 12'd0;
+                    cl_csr_wdata_o <= 32'd0;  //从MPIE恢复
+                    cl_csr_we_o <= 1'b0;
+                
+                end
                 default:begin
                     cl_csr_waddr_o <= 12'd0;
                     cl_csr_wdata_o <= 32'd0;
@@ -194,6 +239,10 @@ module clint(
                 S_CSR_MRET:begin
                     cl_int_o <= 1'b1;
                     cl_addr_o <= mepc_i;
+                end
+                S_CSR_WAIT:begin
+                    cl_int_o <= 1'b0;
+                    cl_addr_o <= 32'd0;
                 end
                 default:begin
                     cl_int_o <= 1'b0;

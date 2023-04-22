@@ -17,6 +17,8 @@ module ex_mem_reg (
     input   wire            [31:0]  ex_mem_addr_i,
     input   wire                    ex_mem_rdtype_i,
 
+    input   wire                    ex_ins_flag,
+
     //to mem
     output  reg             [31:0]  exmem_reg_wdata_o,
     output  reg             [4:0]   exmem_reg_waddr_o,
@@ -32,6 +34,8 @@ module ex_mem_reg (
     output  reg             [31:0]  exmem_mem_addr_o,
     output  reg                     exmem_mem_rdtype_o,
 
+
+    output  reg                     exmem_ins_flag,
     //from fc
     input   wire                    fc_flush_exmem_i,
     input   wire                    fc_stall_exmem_i
@@ -56,6 +60,8 @@ module ex_mem_reg (
             exmem_mem_width_o <= 2'b0;
             exmem_mem_addr_o <= 32'd0;
             exmem_mem_rdtype_o <= 1'b0;
+
+            exmem_ins_flag <= 1'b0;
         end
         else if(fc_stall_exmem_i == 1'b1)begin
             exmem_reg_wdata_o <= exmem_reg_wdata_o;
@@ -71,6 +77,8 @@ module ex_mem_reg (
             exmem_mem_width_o <= exmem_mem_width_o;
             exmem_mem_addr_o <= exmem_mem_addr_o;
             exmem_mem_rdtype_o <= exmem_mem_rdtype_o;
+
+            exmem_ins_flag <= exmem_ins_flag;
         end
         else if(fc_flush_exmem_i == 1'b1)begin
             exmem_reg_wdata_o <= 32'h0;
@@ -86,6 +94,8 @@ module ex_mem_reg (
             exmem_mem_width_o <= 2'b0;
             exmem_mem_addr_o <= 32'd0;
             exmem_mem_rdtype_o <= 1'd0;
+
+            exmem_ins_flag <= 1'b0;
         end
         else begin
             exmem_reg_wdata_o <= ex_reg_wdata_i;
@@ -101,6 +111,8 @@ module ex_mem_reg (
             exmem_mem_width_o <= ex_mem_width_i;
             exmem_mem_addr_o <= ex_mem_addr_i;
             exmem_mem_rdtype_o <= ex_mem_rdtype_i;
+
+            exmem_ins_flag <= ex_ins_flag;
                 
         end
         

@@ -73,6 +73,8 @@ assign Rvcore_data_o = bc_data_o;
 
     wire    [31:0]  id_inst_o;
     wire    [31:0]  id_pc_o;
+
+    wire            id_ins_flag;
     
 
     //id_ex_reg
@@ -94,6 +96,8 @@ assign Rvcore_data_o = bc_data_o;
     wire    [1:0]   idex_mem_width_o;      
     wire    [31:0]  idex_mem_wr_data_o;   
     wire            idex_mem_rdtype_o;  
+
+    wire            idex_ins_flag;
 
     //EX
     wire     [31:0] ex_reg_wdata_o;
@@ -120,6 +124,8 @@ assign Rvcore_data_o = bc_data_o;
 
     wire            ex_req_bus_o;
 
+    wire            ex_ins_flag;
+
     //ex_mem_reg
     wire     [31:0]  exmem_reg_wdata_o;
     wire     [4:0]   exmem_reg_waddr_o;
@@ -135,6 +141,8 @@ assign Rvcore_data_o = bc_data_o;
     wire     [1:0]   exmem_mem_width_o;    
     wire     [31:0]  exmem_mem_addr_o;
     wire             exmem_mem_rdtype_o;
+
+    wire             exmem_ins_flag;
     //MEM
     wire     [31:0]  mem_reg_wdata_o;
     wire     [4:0]   mem_reg_waddr_o;
@@ -144,6 +152,8 @@ assign Rvcore_data_o = bc_data_o;
     wire     [11:0]  mem_csr_waddr_o;
     wire             mem_csr_we_o;
 
+    wire            mem_ins_flag;
+
     //mem_wb_reg
     wire     [31:0]  memwb_reg_wdata_o;
     wire     [4:0]   memwb_reg_waddr_o;
@@ -152,6 +162,8 @@ assign Rvcore_data_o = bc_data_o;
     wire     [31:0]  memwb_csr_wdata_o;
     wire     [11:0]  memwb_csr_waddr_o;
     wire             memwb_csr_we_o;
+
+    wire            memwb_ins_flag;
 
 
     //WB
@@ -224,6 +236,8 @@ assign Rvcore_data_o = bc_data_o;
     wire             fc_stall_idex_o;
     wire             fc_stall_exmem_o;
     wire             fc_stall_memwb_o;
+
+    wire                inst_forward_over;
 
     //csr_regs
     wire        [31:0]  csr_regs_rdata_o;
@@ -374,7 +388,11 @@ assign Rvcore_data_o = bc_data_o;
         .id_csr_rdata_o(id_csr_rdata_o),
 
         .id_inst_o(id_inst_o),
-        .id_pc_o(id_pc_o)
+        .id_pc_o(id_pc_o),
+
+        .id_ins_flag(id_ins_flag),
+
+        .cl_stall_i(cl_stall_o)
     );
 
 
@@ -401,6 +419,8 @@ assign Rvcore_data_o = bc_data_o;
         .id_csr_waddr_i(id_csr_waddr_o),
         .id_csr_rdata_i(id_csr_rdata_o),
 
+        .id_ins_flag(id_ins_flag),
+
         .idex_op_a_o(idex_op_a_o),
         .idex_op_b_o(idex_op_b_o),
         .idex_reg_waddr_o(idex_reg_waddr_o),
@@ -420,6 +440,8 @@ assign Rvcore_data_o = bc_data_o;
         .idex_mem_width_o(idex_mem_width_o),      
         .idex_mem_wr_data_o(idex_mem_wr_data_o),   
         .idex_mem_rdtype_o(idex_mem_rdtype_o),   
+
+        .idex_ins_flag(idex_ins_flag),
 
         .fc_flush_idex_i(fc_flush_idex_o),
         .fc_stall_idex_i(fc_stall_idex_o)
@@ -448,6 +470,9 @@ assign Rvcore_data_o = bc_data_o;
         .idex_csr_waddr_i(idex_csr_waddr_o),
         .idex_csr_rdata_i(idex_csr_rdata_o),        
 
+
+        .idex_ins_flag(idex_ins_flag),
+
         .ex_reg_wdata_o(ex_reg_wdata_o),
         .ex_reg_waddr_o(ex_reg_waddr_o),
         .ex_reg_we_o(ex_reg_we_o),
@@ -460,6 +485,8 @@ assign Rvcore_data_o = bc_data_o;
         .ex_mem_rw_o(ex_mem_rw_o), 
         .ex_mem_width_o(ex_mem_width_o),
         .ex_mem_rdtype_o(ex_mem_rdtype_o),
+
+        .ex_ins_flag(ex_ins_flag),
 
         .ex_req_Dcache_o(ex_req_Dcache_o),
 
@@ -495,6 +522,8 @@ assign Rvcore_data_o = bc_data_o;
         .ex_mem_addr_i(ex_mem_addr_o),
         .ex_mem_rdtype_i(ex_mem_rdtype_o),
 
+        .ex_ins_flag(ex_ins_flag),
+
         .exmem_reg_wdata_o(exmem_reg_wdata_o),
         .exmem_reg_waddr_o(exmem_reg_waddr_o),
         .exmem_reg_we_o(exmem_reg_we_o),
@@ -508,6 +537,8 @@ assign Rvcore_data_o = bc_data_o;
         .exmem_mem_width_o(exmem_mem_width_o),      
         .exmem_mem_addr_o(exmem_mem_addr_o),
         .exmem_mem_rdtype_o(exmem_mem_rdtype_o),
+
+        .exmem_ins_flag(exmem_ins_flag),
 
         .fc_flush_exmem_i(fc_flush_exmem_o),
         .fc_stall_exmem_i(fc_stall_exmem_o)
@@ -531,6 +562,8 @@ assign Rvcore_data_o = bc_data_o;
         .exmem_mem_addr_i(exmem_mem_addr_o),  
         .exmem_mem_rdtype_i(exmem_mem_rdtype_o),
 
+        .exmem_ins_flag(exmem_ins_flag),
+
         .mem_reg_wdata_o(mem_reg_wdata_o),
         .mem_reg_waddr_o(mem_reg_waddr_o),
         .mem_reg_we_o(mem_reg_we_o),
@@ -538,6 +571,8 @@ assign Rvcore_data_o = bc_data_o;
         .mem_csr_wdata_o(mem_csr_wdata_o),
         .mem_csr_waddr_o(mem_csr_waddr_o),
         .mem_csr_we_o(mem_csr_we_o),
+
+        .mem_ins_flag(mem_ins_flag),
 
         .Dcache_ready_i(Dcache_ready_o),
         .Dcache_data_i(Dcache_data_o),
@@ -562,6 +597,8 @@ assign Rvcore_data_o = bc_data_o;
         .mem_csr_waddr_i(mem_csr_waddr_o),
         .mem_csr_we_i(mem_csr_we_o),
 
+        .mem_ins_flag(mem_ins_flag),
+
         .memwb_reg_wdata_o(memwb_reg_wdata_o),
         .memwb_reg_waddr_o(memwb_reg_waddr_o),
         .memwb_reg_we_o(memwb_reg_we_o),
@@ -569,6 +606,8 @@ assign Rvcore_data_o = bc_data_o;
         .memwb_csr_wdata_o(memwb_csr_wdata_o),
         .memwb_csr_waddr_o(memwb_csr_waddr_o),
         .memwb_csr_we_o(memwb_csr_we_o),
+
+        .memwb_ins_flag(memwb_ins_flag),
 
         .fc_flush_memwb_i(fc_flush_memwb_o),
         .fc_stall_memwb_i(fc_stall_memwb_o)
@@ -730,6 +769,10 @@ assign Rvcore_data_o = bc_data_o;
 
         .cl_stall_i(cl_stall_o),
 
+        .idex_ins_flag(idex_ins_flag),
+        .exmem_ins_flag(exmem_ins_flag),
+        .memwb_ins_flag(memwb_ins_flag),
+
 
         .fc_flush_ifid_o(fc_flush_ifid_o),
         .fc_flush_idex_o(fc_flush_idex_o),
@@ -754,7 +797,9 @@ assign Rvcore_data_o = bc_data_o;
         .fc_stall_ifid_o(fc_stall_ifid_o),
         .fc_stall_idex_o(fc_stall_idex_o),
         .fc_stall_exmem_o(fc_stall_exmem_o),
-        .fc_stall_memwb_o(fc_stall_memwb_o)
+        .fc_stall_memwb_o(fc_stall_memwb_o),
+
+        .inst_forward_over(inst_forward_over)
     );
 
 
@@ -842,6 +887,9 @@ assign Rvcore_data_o = bc_data_o;
     .cl_csr_we_o(cl_csr_we_o),
     .cl_int_o(cl_int_o),
     .cl_addr_o(cl_addr_o),
+
+    .inst_forward_over(inst_forward_over),
+
     .cl_stall_o(cl_stall_o)
 );
 

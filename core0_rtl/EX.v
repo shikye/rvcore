@@ -24,6 +24,8 @@ module EX (
     input   wire            [11:0]  idex_csr_waddr_i,
     input   wire            [31:0]  idex_csr_rdata_i,
 
+    input   wire                    idex_ins_flag,
+
     //to ex_mem_reg
     output  wire            [31:0]  ex_reg_wdata_o,
     output  wire            [4:0]   ex_reg_waddr_o,
@@ -38,6 +40,9 @@ module EX (
     output  wire            [1:0]   ex_mem_width_o,
     output  wire                    ex_mem_rdtype_o,     //0-signed 1-unsigned
     //output  wire            [31:0]  ex_mem_addr_o,
+
+
+    output  wire                    ex_ins_flag,
 
 
     //to Dcache
@@ -61,6 +66,7 @@ module EX (
 
 );
 
+assign ex_ins_flag = idex_ins_flag;
 
 reg             [31:0]  ex_op_c_o;
 
@@ -101,11 +107,54 @@ assign ex_req_Dcache_o = (idex_mtype_i && (ex_mem_addr_o < 32'h2000_0000) )? 1'b
 assign ex_req_bus_o = ~req_bus_buffer && req_bus;
 
 
+    
 
 
 
     wire [31:0] op_a = idex_op_a_i;
+    wire [31:0] op_a_invert = ~idex_op_a_i + 1;
     wire [31:0] op_b = idex_op_b_i;
+    wire [31:0] op_b_invert = ~idex_op_b_i + 1;
+
+    //-----------------mul
+    wire [63:0] mul_temp = mul_op1 * mul_op2;
+    wire [63:0] mul_temp_invert = ~mul_temp + 1;
+
+    wire [31:0] div_temp = mul_op1 / mul_op2;
+    wire [31:0] div_temp_invert = ~div_temp + 1;
+
+    wire [31:0] rem_temp = mul_op1 % mul_op2;
+    wire [31:0] rem_temp_invert = ~rem_temp + 1;
+
+
+    reg [31:0] mul_op1;
+    reg [31:0] mul_op2;
+
+    always@(*)begin
+
+        case(idex_ALUctrl_i)
+            `MUL, `MULHU, `DIVU, `REMU:begin
+                mul_op1 = op_a;
+                mul_op2 = op_b;
+            end
+            `MULHSU:begin
+                mul_op1 = (op_a[31] == 1'b1) ? (op_a_invert) : op_a;
+                mul_op2 = op_b;
+            end
+            `MULH, `DIV, `REM:begin
+                mul_op1 = (op_a[31] == 1'b1) ? (op_a_invert) : op_a;
+                mul_op2 = (op_b[31] == 1'b1) ? (op_b_invert) : op_b;
+            end
+            default:;
+        endcase
+    
+    end
+
+
+
+
+
+
 
     always @(*) begin
         case(idex_ALUctrl_i)
@@ -124,6 +173,46 @@ assign ex_req_bus_o = ~req_bus_buffer && req_bus;
             `SRA:   ex_op_c_o = ($signed(op_a)) >>> op_b[4:0];   
             `AND:   ex_op_c_o = op_a & op_b;       
             `NAND:  ex_op_c_o = op_a & op_b;       
+
+            `MUL:   ex_op_c_o = mul_temp[31:0];
+            `MULH:begin
+                case({op_a[31], op_b[31]})
+                    2'b00, 2'b11:
+                        ex_op_c_o = mul_temp[63:32];
+                    2'b01, 2'b10:
+                        ex_op_c_o = mul_temp_invert[63:32];
+                    default:;
+                endcase
+            end
+            `MULHSU:begin
+                if(op_a[31] == 1'b1)
+                    ex_op_c_o = mul_temp_invert[63:32];
+                else 
+                    ex_op_c_o = mul_temp[63:32];
+            end
+            `MULHU: ex_op_c_o = mul_temp[63:32];
+            `DIV:begin
+                case({op_a[31], op_b[31]})
+                    2'b00, 2'b11:
+                        ex_op_c_o = div_temp;
+                    2'b01, 2'b10:
+                        ex_op_c_o = div_temp_invert;
+                    default:;
+                endcase
+            end
+            `DIVU:  ex_op_c_o = div_temp;
+            `REM:begin
+                case({op_a[31], op_b[31]})
+                    2'b00, 2'b11:
+                        ex_op_c_o = rem_temp;
+                    2'b01, 2'b10:
+                        ex_op_c_o = rem_temp_invert;
+                    default:;
+                endcase
+            end
+            `REMU:  ex_op_c_o = rem_temp;
+
+
             `NO_OP: ex_op_c_o = 32'h0;
             default:ex_op_c_o = 32'h0;
         endcase
